@@ -1,0 +1,8 @@
+# Red Hat OpenShift AI — enabled on mkl-mgmt-dev-1.
+# RHOAI operator and DSCI are already installed (353 days).
+# This gate file deploys the DataScienceCluster CR to activate components.
+#
+# KServe model serving targets the GPU worker node via nvidia.com/gpu resource
+# requests on InferenceService pods — no explicit nodeSelector needed since
+# the GPU DevicePlugin makes it the only node that can satisfy the request.
+{}

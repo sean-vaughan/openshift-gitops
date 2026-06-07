@@ -1,0 +1,75 @@
+---
+# ClusterPolicy configures all GPU Operator components.
+# Runs on any node with the label feature.node.kubernetes.io/pci-10de.present=true
+# (auto-detected by Node Feature Discovery, which the GPU Operator deploys).
+#
+# For the mkl-mgmt-dev-1 GPU worker (RTX 3090, single GPU per node):
+#   - Driver: containerized, no host driver needed on CoreOS
+#   - Toolkit: CUDA toolkit injected into containers via CDI
+#   - DevicePlugin: exposes nvidia.com/gpu resource to the scheduler
+#   - MIG: disabled — 3090 is Ampere but consumer-class, no MIG support
+#   - DCGM: telemetry and health monitoring
+apiVersion: nvidia.com/v1
+kind: ClusterPolicy
+metadata:
+  name: gpu-cluster-policy
+spec:
+  operator:
+    defaultRuntime: crio
+    runtimeClass: nvidia
+    use_ocp_driver_toolkit: true
+
+  driver:
+    enabled: true
+    # usePrecompiled avoids in-cluster kernel compilation; preferred on CoreOS
+    usePrecompiled: false
+
+  toolkit:
+    enabled: true
+
+  devicePlugin:
+    enabled: true
+    config:
+      name: time-slicing-config
+      default: any
+
+  mig:
+    strategy: single
+
+  dcgm:
+    enabled: true
+
+  dcgmExporter:
+    enabled: true
+
+  nodeStatusExporter:
+    enabled: true
+
+  gfd:
+    enabled: true
+
+  validator:
+    plugin:
+      env:
+        - name: WITH_WORKLOAD
+          value: "true"
+
+---
+# Optional: time-slicing config for sharing the 3090 across multiple inference pods.
+# 4 slices = 4 concurrent vLLM requests sharing the GPU.
+# Remove or set replicas: 1 for exclusive single-workload use.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: time-slicing-config
+  namespace: nvidia-gpu-operator
+data:
+  any: |
+    version: v1
+    flags:
+      migStrategy: none
+    sharing:
+      timeSlicing:
+        resources:
+          - name: nvidia.com/gpu
+            replicas: 4

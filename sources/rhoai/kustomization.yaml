@@ -1,0 +1,3 @@
+resources:
+  - dsc-initialization.yaml
+  - data-science-cluster.yaml

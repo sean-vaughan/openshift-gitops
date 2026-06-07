@@ -1,0 +1,27 @@
+---
+# DSCInitialization is a singleton installed by the RHOAI operator.
+# It configures the shared platform layer: ServiceMesh, trusted CA, monitoring namespace.
+# The operator creates this on first install; this file captures it in git for auditability.
+#
+# NOTE: managementState on all components is Managed — the operator owns and reconciles them.
+apiVersion: dscinitialization.opendatahub.io/v1
+kind: DSCInitialization
+metadata:
+  name: default-dsci
+spec:
+  applicationsNamespace: redhat-ods-applications
+  monitoring:
+    managementState: Managed
+    namespace: redhat-ods-monitoring
+  serviceMesh:
+    auth:
+      audiences:
+        - https://kubernetes.default.svc
+    controlPlane:
+      metricsCollection: Istio
+      name: data-science-smcp
+      namespace: istio-system
+    managementState: Managed
+  trustedCABundle:
+    customCABundle: ""
+    managementState: Managed

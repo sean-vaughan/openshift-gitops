@@ -1,0 +1,4 @@
+# GPU Operator — enabled on mkl-mgmt-dev-1 for the RTX 3090 worker node.
+# Requires the GPU worker to be registered to the cluster before this app
+# will fully reconcile (ClusterPolicy targets nodes with GPU PCI device label).
+{}

@@ -1,0 +1,68 @@
+---
+# DataScienceCluster enables individual RHOAI components.
+# This configuration targets a management cluster with a dedicated GPU worker node
+# (RTX 3090, 24 GB VRAM) running vLLM model serving via KServe.
+#
+# Component states:
+#   Managed   — operator installs and reconciles the component
+#   Removed   — operator removes the component if previously installed
+#   Unmanaged — operator ignores the component (manual control)
+#
+# Disabled components (Removed) can be enabled in a gate file override
+# once the GPU worker node is registered and GPU Operator is healthy.
+apiVersion: datasciencecluster.opendatahub.io/v1
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    # Dashboard — RHOAI web console in the OpenShift UI
+    dashboard:
+      managementState: Managed
+
+    # Data Science Pipelines — Kubeflow Pipelines v2 for agentic workflows
+    datasciencepipelines:
+      managementState: Managed
+
+    # Workbenches — Jupyter notebook environments
+    workbenches:
+      managementState: Managed
+
+    # KServe — model serving platform (vLLM, OpenVINO, etc.)
+    # Requires GPU worker node and nvidia-gpu-operator to be healthy.
+    # Enable in gate file once GPU worker is registered.
+    kserve:
+      managementState: Managed
+      serving:
+        managementState: Managed
+        name: knative-serving
+        ingressGateway:
+          certificate:
+            type: SelfSigned
+
+    # ModelMeshServing — lightweight multi-model serving (alternative to KServe)
+    # Using KServe instead for single large-model GPU workloads.
+    modelmeshserving:
+      managementState: Removed
+
+    # Model Registry — central catalog of registered models and versions
+    modelregistry:
+      managementState: Managed
+      registriesNamespace: rhoai-model-registries
+
+    # TrustyAI — model bias/fairness metrics and explainability
+    trustyai:
+      managementState: Removed
+
+    # Ray — distributed compute for training and batch inference
+    # Enable when training workloads are needed.
+    ray:
+      managementState: Removed
+
+    # Kueue — batch job queuing and quota management
+    kueue:
+      managementState: Removed
+
+    # CodeFlare — distributed workload orchestration (MCAD/InstaScale)
+    codeflare:
+      managementState: Removed
