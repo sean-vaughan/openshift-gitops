@@ -1,7 +1,3 @@
-# CUTOVER: before applying, delete the broken sealed secret from the old repo:
-#   kubectl delete sealedsecret openshift-repo -n openshift-gitops
-#   kubectl delete secret openshift-repo -n openshift-gitops
-#
 # openshift-gitops.git is a public repo — no Argo CD repository credential needed.
 # preserveResourcesOnDeletion + prune/selfHeal false: Argo CD must not
 # delete the ArgoCD CR or operator resources if this Application is removed.
