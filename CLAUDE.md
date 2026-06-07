@@ -116,3 +116,13 @@ without reorganizing the repo. See `docs/adr/0001-sources-by-app.md`.
 - Prefer consistency and derivability from structure over explicit configuration.
 - This `CLAUDE.md` is the source of truth for AI-assisted generation. Project
   instructions in Cowork/Claude settings defer to this file.
+
+### Tooling Conventions
+
+- **Use `oc` instead of `kubectl`** for all cluster interactions. This is an
+  OpenShift environment; `oc` is the correct CLI and provides additional
+  OpenShift-aware output and commands.
+- **Operator subscriptions**: `startingCSV` should be omitted in `sources/`
+  (org default) so dev clusters always get the current channel version.
+  Production clusters pin via a gate file override or cluster kustomize patch —
+  explicit, auditable, never automatic. See ADR-0003 cascade model.
