@@ -43,6 +43,12 @@ spec:
       # App name is derived from the gate file's filename (without .yaml extension).
       # Project defaults to 'platform'; override via spec.project in the gate file.
       # Full name override: set metadata.name in the gate file.
+      #
+      # No cascade-delete finalizer by default. Argo CD auto-adds
+      # resources-finalizer.argocd.argoproj.io when prune:true is set, which
+      # causes blocking loops when the openshift-gitops namespace cycles.
+      # Gate files may opt in explicitly if cascade-delete is desired.
+      finalizers: []
       name: >-
         {{ default
              (printf "%s---%s---%s"
