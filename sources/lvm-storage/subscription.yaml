@@ -11,4 +11,3 @@ spec:
   name: lvms-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  startingCSV: lvms-operator.v4.20.0
