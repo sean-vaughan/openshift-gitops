@@ -1,0 +1,9 @@
+
+resources:
+- provisioning.yaml
+- agent-service-config.yaml # Update manifest for disconnected environments
+# - mirror-config.yaml # Uncomment and update appropriately for disconnected environments
+- multiclusterhub.yaml
+- subscription.yaml
+- operator-group.yaml
+# - mce-repo.yaml # Uncomment and update appropriately for disconnected environments

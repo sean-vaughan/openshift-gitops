@@ -23,21 +23,40 @@ to be explicit about everything.
 
 ## Decision
 
-Every configurable value in this repo has an authoritative organizational default.
-Teams only write what genuinely deviates from that default.
+Every value that this repo governs has an authoritative organizational default.
+Teams only write what genuinely deviates from that default. Kubernetes field
+defaults (restart policies, resource limits, etc.) are Kubernetes's concern, not
+this repo's — we only declare defaults for the concerns we own.
+
+### Configuration cascade
+
+Configuration resolves through layers, similar to CSS cascade. Each layer only
+needs to specify what differs from the layer below. Higher layers win.
+
+```
+Layer 4 — Per-cluster-per-app gate file   clusters/<cluster>/<app>.yaml
+Layer 3 — Profile overrides               profiles/teams/, profiles/cluster-types/,
+                                           profiles/data-centers/
+Layer 2 — Org defaults                    sources/app-of-apps/ template,
+                                           sources/app-projects/chart/values.yaml
+Layer 1 — Kubernetes / Argo CD defaults   (outside this repo's scope)
+```
+
+Layers 2 and above are within this repo. There is no fixed limit on the number
+of profile layers — a team may apply multiple profiles (e.g., a cluster-type
+profile and a team profile) each contributing a subset of overrides.
 
 Defaults are declared in exactly one place per concern:
 
-| Concern | Default location |
+| Concern | Org default location |
 |---|---|
 | Argo CD Application fields | `sources/app-of-apps/applicationset.yaml` template |
 | AppProject RBAC structure | `sources/app-projects/chart/values.yaml` |
-| LDAP group allow-list | `schema/ldap-groups.yaml` |
+| Team / cluster-type / data-center profiles | `profiles/` |
 
-Overrides are supported at every level and are always additive — a team that needs
-a non-default destination, sync policy, or RBAC rule adds only the differing fields.
-The absence of a field always means "use the org default," never "use the Kubernetes
-default."
+Overrides are always additive — a team that needs a non-default destination, sync
+policy, or RBAC rule adds only the differing fields. The absence of a field means
+"use the layer below," never "undefined."
 
 ### ApplicationSet defaults
 
@@ -69,7 +88,7 @@ in the `clusters/<cluster>/app-projects.yaml` valueFiles list.
 
 **Positive:**
 
-- A new app is a single file (or no file) in `clusters/<cluster>/`. No boilerplate.
+- A new app is a single empty file in `clusters/<cluster>/`. No boilerplate. (A missing file means the app is not deployed to that cluster.)
 - A new AppProject is a minimal values file. No RBAC boilerplate.
 - Org-wide policy changes (new sync option, updated RBAC structure) are made in one
   place and propagate automatically.

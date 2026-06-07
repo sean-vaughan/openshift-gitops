@@ -1,0 +1,27 @@
+{{ $location := .Values.location }}
+{{- range .Values.bareMetalHosts }}
+---
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: {{ .hostname }}
+  namespace: {{ $location }}
+  annotations:
+    bmac.agent-install.openshift.io/hostname: {{ .hostname }}
+    bmac.agent-install.openshift.io/role: {{ .role | default "" | quote }}
+  labels:
+    infraenvs.agent-install.openshift.io: {{ $location }}
+    agentclusterinstalls.extensions.hive.openshift.io/location: {{ $location }}
+    location: {{ $location }}
+spec:
+  externallyProvisioned: {{ .externallyProvisioned | default true }}
+  online: {{ .online | default true }}
+  bootMACAddress: {{ .bootMAC }}
+  bmc:
+    address: {{ .bmcAddress | default "localhost" }}
+    credentialsName: {{ .bmcCredentialsName | default "bmc-credentials" }}
+{{- if .rootDeviceNints -}}
+  rootDeviceHints:
+{{ .rootDeviceNints | toYaml | indent 4 }}
+{{- end }}
+{{- end }}

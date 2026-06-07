@@ -1,0 +1,19 @@
+# Platform team AppProject definition — future canonical location.
+#
+# Currently, the delivery copy lives at sources/app-projects/platform.yaml because
+# Argo CD Helm valueFiles are relative to spec.source.path. Once app-projects uses
+# Argo CD multi-source (v2.6+), this file becomes the authoritative source and
+# sources/app-projects/platform.yaml can be removed.
+#
+# See sources/app-projects/platform.yaml for the active delivery copy.
+
+projects:
+  - name: platform
+    description: "Platform team — cluster-admin workloads and GitOps bootstrap"
+    teams:
+      - name: platform
+        # LDAP group names. Defaults to <teamName>-admins / -developers / -viewers
+        # if omitted. Groups must be listed in schema/ldap-groups.yaml.
+        adminsGroup: platform-admins
+        developersGroup: platform-developers
+        viewersGroup: platform-viewers

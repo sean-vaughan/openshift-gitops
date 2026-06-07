@@ -1,0 +1,16 @@
+# app-of-apps self-management gate file.
+#
+# Points the generated Application's source at the cluster-local Kustomize
+# overlay (clusters/k8s-sno/app-of-apps/), which renders the ApplicationSet
+# with the correct cluster list and cluster secret for this cluster.
+#
+# prune: false / selfHeal: false — Argo CD must not automatically delete or
+# revert the ApplicationSet that manages it. See ADR-0005.
+spec:
+  source:
+    path: clusters/k8s-sno/app-of-apps
+  syncPolicy:
+    preserveResourcesOnDeletion: "true"
+    automated:
+      prune: false
+      selfHeal: false

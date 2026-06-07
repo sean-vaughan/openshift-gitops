@@ -1,1 +1,17 @@
 .DS_Store
+
+# Local Claude Code settings are personal — permissions granted here apply only
+# to this machine and should not be shared. Project-level permissions (if any)
+# belong in .claude/settings.json with narrow, documented allowlists.
+# See: https://docs.anthropic.com/en/docs/claude-code/security
+.claude/settings.local.json
+
+# schema/ holds LDAP allow-lists and validation inputs. Excluded until
+# enforcement (linting, static analysis) is implemented.
+schema/
+
+# Plaintext Kubernetes secrets must never be committed.
+# *-secret.yaml matches any file that could be an unencrypted Secret manifest.
+# The exception allows kubeseal-encrypted SealedSecrets, which are safe to commit.
+*-secret.yaml
+!sealed-*.yaml

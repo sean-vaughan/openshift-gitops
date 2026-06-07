@@ -1,0 +1,17 @@
+# Platform team AppProject — Helm values for sources/app-projects/chart/.
+#
+# Co-located here because Argo CD Helm valueFiles paths are relative to
+# spec.source.path. Long-term, once this Application uses Argo CD multi-source,
+# the canonical location will be profiles/teams/platform/appproject.yaml and
+# this file can be removed.
+#
+# See profiles/teams/platform/appproject.yaml for the future canonical location.
+
+projects:
+  - name: platform
+    description: "Platform team — cluster-admin workloads and GitOps bootstrap"
+    teams:
+      - name: platform
+        adminsGroup: platform-admins
+        developersGroup: platform-developers
+        viewersGroup: platform-viewers

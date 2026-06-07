@@ -1,0 +1,18 @@
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: {{ .Values.location }}
+  namespace: {{ .Values.location }}
+  labels:
+    location: {{ .Values.location }}
+spec:
+  pullSecretRef:
+    name: pull-secret
+  sshAuthorizedKey: '{{ .Values.sshAuthorizedKey }}'
+{{- if .Values.additionalNTPSources -}}
+  additionalNTPSources:
+{{ .Values.additionalNTPSources | toYaml | indent 4 }}
+{{- end }}
+  nmStateConfigLabelSelector:
+    matchLabels:
+      nmstate-label: {{ .Values.location }}

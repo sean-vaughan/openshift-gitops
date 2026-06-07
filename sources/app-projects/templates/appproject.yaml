@@ -1,0 +1,85 @@
+{{- /*
+  Generates one Argo CD AppProject per entry in .Values.projects.
+
+  Each project entry supports the following fields:
+
+    name        (required) AppProject name; must be unique in the Argo CD namespace.
+    description (optional) Human-readable description. Defaults to "<name> team".
+    teams       (required) List of teams that own this project. Each team gets three
+                           Argo CD roles (admins / developers / viewers) mapping to
+                           OpenShift admin / edit / view RBAC. Required per-team
+                           fields: name. Optional: adminsGroup, developersGroup,
+                           viewersGroup (default to <teamName>-admins etc.).
+
+    # Override org defaults for this project only:
+    sourceRepos              (optional) Replaces .Values.sourceRepos
+    destinations             (optional) Replaces .Values.destinations
+    clusterResourceWhitelist (optional) Replaces .Values.clusterResourceWhitelist
+    namespaceResourceWhitelist (optional) Replaces .Values.namespaceResourceWhitelist
+*/ -}}
+{{- range .Values.projects }}
+{{- $project := . }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $project.name }}
+  namespace: openshift-gitops
+  annotations:
+    gitops.openshift.io/owning-teams: "{{ range $i, $t := $project.teams }}{{ if $i }},{{ end }}{{ $t.name }}{{ end }}"
+spec:
+  description: {{ default (printf "%s team" $project.name) $project.description | quote }}
+
+  destinations:
+    {{- toYaml (default $.Values.destinations $project.destinations) | nindent 4 }}
+
+  sourceRepos:
+    {{- toYaml (default $.Values.sourceRepos $project.sourceRepos) | nindent 4 }}
+
+  {{- with (default $.Values.clusterResourceWhitelist $project.clusterResourceWhitelist) }}
+  clusterResourceWhitelist:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  {{- with (default $.Values.namespaceResourceWhitelist $project.namespaceResourceWhitelist) }}
+  namespaceResourceWhitelist:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  roles:
+    {{- range $project.teams }}
+    {{- $team := . }}
+    {{- $adminsGroup    := default (printf "%s-admins"      $team.name) $team.adminsGroup }}
+    {{- $developersGroup := default (printf "%s-developers" $team.name) $team.developersGroup }}
+    {{- $viewersGroup   := default (printf "%s-viewers"     $team.name) $team.viewersGroup }}
+
+    # Admins: full Application control within the project.
+    # Maps to OpenShift 'admin' namespace role on project namespaces.
+    - name: {{ $team.name }}-admins
+      description: {{ $team.name }} admins — full control
+      groups:
+        - {{ $adminsGroup }}
+      policies:
+        - p, proj:{{ $project.name }}:{{ $team.name }}-admins, applications, *, {{ $project.name }}/*, allow
+
+    # Developers: sync and override, no delete or project-level changes.
+    # Maps to OpenShift 'edit' namespace role on project namespaces.
+    - name: {{ $team.name }}-developers
+      description: {{ $team.name }} developers — sync and override
+      groups:
+        - {{ $developersGroup }}
+      policies:
+        - p, proj:{{ $project.name }}:{{ $team.name }}-developers, applications, get,      {{ $project.name }}/*, allow
+        - p, proj:{{ $project.name }}:{{ $team.name }}-developers, applications, sync,     {{ $project.name }}/*, allow
+        - p, proj:{{ $project.name }}:{{ $team.name }}-developers, applications, override, {{ $project.name }}/*, allow
+
+    # Viewers: read-only.
+    # Maps to OpenShift 'view' namespace role on project namespaces.
+    - name: {{ $team.name }}-viewers
+      description: {{ $team.name }} viewers — read-only
+      groups:
+        - {{ $viewersGroup }}
+      policies:
+        - p, proj:{{ $project.name }}:{{ $team.name }}-viewers, applications, get, {{ $project.name }}/*, allow
+    {{- end }}
+{{- end }}

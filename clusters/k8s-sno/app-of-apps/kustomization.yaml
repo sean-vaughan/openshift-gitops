@@ -1,0 +1,16 @@
+resources:
+  - cluster.yaml
+  - ../../../sources/app-of-apps
+
+patches:
+  - target:
+      kind: ApplicationSet
+      group: argoproj.io
+      version: v1alpha1
+      name: app-of-apps
+      namespace: openshift-gitops
+    patch: |-
+      - op: add
+        path: /spec/generators/0/matrix/generators/0/list/elements
+        value:
+          - clusterName: k8s-sno

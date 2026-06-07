@@ -1,0 +1,9 @@
+# openshift-gitops.git is a public repo — no Argo CD repository credential needed.
+# preserveResourcesOnDeletion + prune/selfHeal false: Argo CD must not
+# delete the ArgoCD CR or operator resources if this Application is removed.
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: "true"
+    automated:
+      prune: false
+      selfHeal: false

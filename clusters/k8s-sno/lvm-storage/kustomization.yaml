@@ -1,0 +1,3 @@
+resources:
+  - lvm-cluster.yaml
+  - ../../../sources/lvm-storage

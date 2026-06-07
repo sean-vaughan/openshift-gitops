@@ -1,0 +1,19 @@
+# Argo CD cluster secret for k8s-sno.
+#
+# Uses the real cluster name (not 'in-cluster') per ADR-0004. The server URL
+# is https://kubernetes.default.svc because this Argo CD instance manages its
+# own cluster. For hub-managed clusters, update server to the cluster API URL.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k8s-sno-cluster
+  namespace: openshift-gitops
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+    app.kubernetes.io/instance: app-of-apps
+  annotations:
+    managed-by: argocd.argoproj.io
+stringData:
+  name: k8s-sno
+  server: 'https://kubernetes.default.svc'
+type: Opaque
