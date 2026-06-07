@@ -1,0 +1,32 @@
+# Organizational defaults for all AppProjects.
+# These values apply to every project unless explicitly overridden in the
+# per-team values file (sources/app-projects/<team>.yaml). See ADR-0003.
+
+# Source repositories all projects are allowed to deploy from by default.
+# Teams with additional or different source repos override this field.
+sourceRepos:
+  - https://github.com/sean-vaughan/openshift-gitops.git
+
+# Default deployment destinations.
+# Platform projects deploy to the local cluster, all namespaces.
+# Application team projects should restrict this to their own namespaces.
+destinations:
+  - server: https://kubernetes.default.svc
+    namespace: "*"
+
+# Cluster-scoped resource access granted by default.
+# Platform projects need full cluster-admin; application team projects should
+# override this to [] or a restricted list.
+clusterResourceWhitelist:
+  - group: "*"
+    kind: "*"
+
+# Namespace-scoped resource access — unrestricted by default.
+namespaceResourceWhitelist:
+  - group: "*"
+    kind: "*"
+
+# Projects list — empty by default; populated by per-team values files.
+# Each entry defines one AppProject. Required fields: name, teams.
+# See sources/app-projects/platform.yaml for a worked example.
+projects: []

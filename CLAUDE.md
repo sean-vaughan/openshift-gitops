@@ -34,8 +34,12 @@ structural changes to the repo.
 - `sources/` contains all Kubernetes manifests targeted at Argo CD `spec.source`
   definitions. Each `sources/<app-name>` subdirectory is the stable unit of
   configuration for one application.
+- `profiles/` contains organizational profiles: team configs, cluster-type app
+  compositions, and data-center-specific overrides. Profiles are Argo CD Applications
+  with organizational significance.
 - `docs/` holds extended documentation including ADRs (`docs/adr/`).
 - `schema/` holds non-renderable validation inputs (e.g., LDAP group allow-lists).
+  Not tracked in git until schema enforcement is implemented.
 - `README.md` and standard git files live at the root.
 
 ### App-of-Apps Pattern
@@ -73,13 +77,16 @@ Application object regardless of deployment model.
 
 ### Clusters
 
-- Clusters are defined by: **data-center** × **cluster-type** × **environment**
-  (`dev`/`tst`/`prd`) × **unique sequence ID** (1, 2, 3, …). Clusters are not
-  snowflakes.
-- Data-center, cluster-type, and environment are common profiles that map to RHACM
-  `ManagedCluster` labels.
-- Cluster-type fully specifies the complete set of apps deployed on that cluster,
-  which in turn defines the AppProjects and teams that own those apps.
+- Cluster names follow the pattern `<dc>-<type>-<env>-<n>`, e.g. `rdu-sno-dev-1`.
+  See ADR-0007. Lab/personal clusters may use free-form names (e.g., `k8s-sno`).
+- Each cluster has exactly one cluster-type. A cluster-type is a profile that
+  declares the canonical set of apps for that class of cluster, composed from
+  one or more app-groups.
+- App-groups are reusable collections of apps that a cluster-type profile pulls
+  in. A single cluster-type may include multiple app-groups (e.g., `hub` cluster-type
+  includes `platform-base` + `hub-networking` app-groups).
+- Data-center, cluster-type, and environment classifications are also reflected
+  as RHACM `ManagedCluster` labels for policy placement rules.
 
 ### Platform Teams
 

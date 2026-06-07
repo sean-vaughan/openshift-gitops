@@ -1,0 +1,15 @@
+{{ $location := .Values.location }}
+{{- range .Values.bareMetalHosts }}
+{{- if .nmStateConfigSpec }}
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: NMStateConfig
+metadata:
+  name: {{ .hostname }}
+  namespace: {{ $location }}
+  labels:
+    nmstate-label: {{ $location }}
+spec:
+{{ .nmStateConfigSpec | toYaml | indent 2 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,39 @@
+
+# location: dc-1
+# sshAuthorizedKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrEudq1QxMmgPadqO4cpTc4FV3OR5G1YdTB8qyniboD fwilliams@FWILLIAMS'
+
+# bareMetalHosts:
+# - hostname: host-1
+#   role: master
+#   rootDeviceHints:
+#     wwn: 0x99999999
+#   bootMAC: 02:da:6f:00:00:06
+#   nmStateConfigSpec:
+#     config:
+#       interfaces:
+#         - name: ens4
+#           type: ethernet
+#           mac-address: 02:da:6f:00:00:06
+#           state: up
+#           ipv4:
+#             dhcp: true
+#     interfaces:
+#       - name: ens3
+#         mac-address: 02:da:6f:00:00:06
+# - hostname: host-2
+#   role: master
+#   rootDeviceHints:
+#     wwn: 0x99999999
+#   bootMAC: 02:da:6f:00:00:07
+#   nmStateConfigSpec:
+#     config:
+#       interfaces:
+#         - name: ens4
+#           type: ethernet
+#           mac-address: 02:da:6f:00:00:07
+#           state: up
+#           ipv4:
+#             dhcp: true
+#     interfaces:
+#       - name: ens3
+#         mac-address: 02:da:6f:00:00:07

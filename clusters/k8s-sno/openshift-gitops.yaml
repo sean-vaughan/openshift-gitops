@@ -1,0 +1,6 @@
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: "true"
+    automated:
+      prune: false
+      selfHeal: false

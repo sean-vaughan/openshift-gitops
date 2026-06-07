@@ -1,0 +1,8 @@
+apiVersion: v2
+name: app-projects
+description: >
+  Locally-contained Helm chart that generates Argo CD AppProject resources from
+  per-team values files. Encodes organizational defaults for RBAC structure,
+  allowed source repos, and deployment destinations. See ADR-0003.
+type: application
+version: 0.1.0

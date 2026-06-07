@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: app-of-apps
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+
+  generators:
+    - matrix:
+        generators:
+          # Cluster list — injected per-cluster via Kustomize patch in
+          # clusters/<clusterName>/app-of-apps/kustomization.yaml (ADR-0004, ADR-0007).
+          # Base is empty; each cluster's overlay adds its own clusterName element.
+          # clusterName must match the named Argo CD cluster secret — never 'in-cluster'.
+          - list:
+              elements: []
+
+          # Gate + override mechanism: touching clusters/<clusterName>/<app>.yaml
+          # includes that app on that cluster. The file may be empty ({}) for
+          # pure defaults, or contain any Argo CD Application metadata/spec
+          # overrides (see templatePatch below).
+          - git:
+              repoURL: 'https://github.com/sean-vaughan/openshift-gitops.git'
+              revision: HEAD
+              files:
+                - path: 'clusters/{{ .clusterName }}/*.yaml'
+
+  # Allow teams and operators to make ephemeral changes in the Argo CD UI without
+  # triggering a revert on the next sync. Intentional deviations (e.g., pointing
+  # an app at a dev branch for testing) are preserved until explicitly reverted.
+  # See ADR-0003.
+  ignoreApplicationDifferences:
+    - jqPathExpressions:
+        - .spec.source.repoURL
+        - .spec.source.targetRevision
+        - .spec.source.path
+        - .spec.syncPolicy
+
+  template:
+    metadata:
+      # Naming convention per ADR-0002: <clusterName>---<projectName>---<appName>
+      # App name is derived from the gate file's filename (without .yaml extension).
+      # Project defaults to 'platform'; override via spec.project in the gate file.
+      # Full name override: set metadata.name in the gate file.
+      name: >-
+        {{ default
+             (printf "%s---%s---%s"
+               .clusterName
+               (dig "spec" "project" "platform" .)
+               (trimSuffix ".yaml" .path.filename))
+             (dig "metadata" "name" "" .) }}
+      labels:
+        gitops.openshift.io/cluster-name: '{{ .clusterName }}'
+        gitops.openshift.io/app-name: '{{ trimSuffix ".yaml" .path.filename }}'
+        gitops.openshift.io/project: '{{ dig "spec" "project" "platform" . }}'
+        gitops.openshift.io/source-path: '{{ trimSuffix ".yaml" .path.filename }}'
+
+    spec:
+      destination:
+        name: '{{ default .clusterName (dig "spec" "destination" "name" "" .) }}'
+        namespace: '{{ default "openshift-gitops" (dig "spec" "destination" "namespace" "" .) }}'
+      project: '{{ dig "spec" "project" "platform" . }}'
+      source:
+        path: >-
+          {{ default
+               (printf "sources/%s" (trimSuffix ".yaml" .path.filename))
+               (dig "spec" "source" "path" "" .) }}
+        repoURL: >-
+          {{ default
+               "https://github.com/sean-vaughan/openshift-gitops.git"
+               (dig "spec" "source" "repoURL" "" .) }}
+        targetRevision: '{{ default "HEAD" (dig "spec" "source" "targetRevision" "" .) }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m0s
+          limit: 2
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+
+  # Full Application override escape hatch (ADR-0003).
+  # Any field in metadata or spec can be overridden from the gate file.
+  # The patch is a deep merge — only specified fields are overridden.
+  templatePatch: |
+    {{- if .metadata }}
+    metadata:
+      {{ toYaml .metadata | nindent 2 }}
+    {{- end }}
+    {{- if .spec }}
+    spec:
+      {{ toYaml .spec | nindent 2 }}
+    {{- end }}

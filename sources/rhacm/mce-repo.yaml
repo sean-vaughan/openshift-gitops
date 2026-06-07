@@ -1,0 +1,9 @@
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: mce-repo
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - mirror.registry.com:5000/multicluster-engine # Replace with your mirror registry
+    source: registry.redhat.io/multicluster-engine

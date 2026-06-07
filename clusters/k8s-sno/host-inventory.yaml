@@ -1,0 +1,6 @@
+spec:
+  source:
+    helm:
+      valuesObject:
+        location: dc-1
+        sshPublicKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOjJxh/yC65t0ZAKydvFIifj1San9Z8+no2EX0Bc0izy'

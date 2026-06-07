@@ -1,0 +1,18 @@
+
+resources:
+#- sealing-key-secret.yaml
+- cluster-role-binding.yaml
+- namespace.yaml
+
+helmGlobals:
+  chartHome: .
+
+helmCharts:
+  - name: sealed-secrets
+    releaseName: sealed-secrets
+    namespace: sealed-secrets
+    includeCRDs: true
+    valuesInline:
+      namespace: sealed-secrets
+      rbac: 
+        pspEnabled: false
