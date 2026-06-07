@@ -26,8 +26,7 @@ metadata:
   name: {{ $project.name }}
   namespace: openshift-gitops
   annotations:
-    gitops.openshift.io/owning-teams: >-
-      {{- range $i, $t := $project.teams }}{{ if $i }},{{ end }}{{ $t.name }}{{ end }}
+    gitops.openshift.io/owning-teams: "{{ range $i, $t := $project.teams }}{{ if $i }},{{ end }}{{ $t.name }}{{ end }}"
 spec:
   description: {{ default (printf "%s team" $project.name) $project.description | quote }}
 
