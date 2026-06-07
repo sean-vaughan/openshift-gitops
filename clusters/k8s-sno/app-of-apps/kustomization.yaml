@@ -1,5 +1,5 @@
 resources:
-  - cluster-secret.yaml
+  - cluster.yaml
   - ../../../sources/app-of-apps
 
 patches:
@@ -14,3 +14,11 @@ patches:
         path: /spec/generators/0/matrix/generators/0/list/elements
         value:
           - clusterName: k8s-sno
+      # CUTOVER: scan gate files from feature branch during validation.
+      # Remove these two ops before merging to main (git generator reverts to HEAD).
+      - op: replace
+        path: /spec/generators/0/matrix/generators/1/git/revision
+        value: feature/gitops-flywheel
+      - op: replace
+        path: /spec/template/spec/source/targetRevision
+        value: feature/gitops-flywheel

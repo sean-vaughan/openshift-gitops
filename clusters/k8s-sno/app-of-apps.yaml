@@ -9,6 +9,10 @@
 spec:
   source:
     path: clusters/k8s-sno/app-of-apps
+    # CUTOVER: pin to feature branch while validating migration.
+    # Remove this line (and the git generator patch in app-of-apps/kustomization.yaml)
+    # before merging to main.
+    targetRevision: feature/gitops-flywheel
   syncPolicy:
     preserveResourcesOnDeletion: "true"
     automated:
