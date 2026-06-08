@@ -8,70 +8,18 @@ The flywheel is self-managing once running, but something must turn it the first
 time. These are the intentional bootstrapping seams — the one-time manual steps
 that break the self-reference cycle.
 
-```mermaid
-sequenceDiagram
-    actor OPS as Operator
-    participant GIT as git repo
-    participant K8S as cluster (k8s-sno)
-    participant ARGO as Argo CD
+![Bootstrap Sequence](img/06a-bootstrap-sequence.svg)
 
-    Note over OPS,K8S: Step 1 — Manual bootstrap (one-time)
-    OPS->>GIT: commit clusters/k8s-sno/app-of-apps/
-    Note right of GIT: cluster-secret.yaml<br/>kustomization.yaml<br/>(patches elements list)
-    OPS->>K8S: kubectl apply -k clusters/k8s-sno/app-of-apps/
-    K8S-->>ARGO: ApplicationSet created
-    K8S-->>ARGO: cluster secret k8s-sno registered
-
-    Note over ARGO,K8S: Step 2 — Flywheel starts spinning
-    ARGO->>GIT: poll clusters/k8s-sno/*.yaml
-    GIT-->>ARGO: app-of-apps.yaml, app-projects.yaml, …
-    ARGO->>ARGO: generate Applications from gate files
-    ARGO->>K8S: sync app-of-apps Application
-    Note right of K8S: ApplicationSet now self-managed
-    ARGO->>K8S: sync app-projects Application
-    Note right of K8S: AppProjects created (platform, …)
-
-    Note over ARGO,K8S: Step 3 — Steady state
-    ARGO->>K8S: sync all other Applications
-    Note right of K8S: All apps reach Healthy/Synced
-    loop Continuous reconciliation
-        ARGO->>GIT: poll for changes
-        GIT-->>ARGO: new commit detected
-        ARGO->>K8S: reconcile drift to desired state
-    end
-```
+> Source: [`src/06a-bootstrap-sequence.d2`](src/06a-bootstrap-sequence.d2) — render with `make` in this directory.
 
 ## Self-reference map
 
 Every self-reference in the repo is intentional and documented. Each has a single
 manual bootstrapping seam that breaks the cycle once.
 
-```mermaid
-%%{init: {'flowchart': {'curve': 'step', 'padding': 20}}}%%
-flowchart LR
-    classDef argo     fill:#fff8e1,stroke:#e65100,color:#000
-    classDef platform fill:#eceff1,stroke:#546e7a,color:#000
-    classDef manual   fill:#fce4ec,stroke:#c62828,color:#000
+![Self Reference Map](img/06b-self-reference.svg)
 
-    MANUAL["🔑 kubectl apply -k\nclusters/k8s-sno/app-of-apps/\n\n(one-time manual step)"]:::manual
-
-    APPSET["«argo-appset»\napp-of-apps"]:::argo
-    APP_AO["«argo-app»\nk8s-sno---platform---app-of-apps\n\nprune: false\nselfHeal: false"]:::argo
-    SECRET["«Secret»\nk8s-sno-cluster\n\nargocd.argoproj.io/secret-type: cluster"]:::platform
-    APP_AP["«argo-app»\nk8s-sno---platform---app-projects"]:::argo
-    PROJ["«AppProject»\nplatform"]:::platform
-    ALL_APPS["all other\n«argo-apps»"]:::argo
-
-    MANUAL -->|"delivers both\nin one apply"| APPSET
-    MANUAL -->|"delivers both\nin one apply"| SECRET
-    SECRET -->|"enables Argo CD to\ngenerate Applications\nfor k8s-sno"| APPSET
-    APPSET -->|generates| APP_AO
-    APP_AO -->|"self-manages\nApplicationSet"| APPSET
-    APPSET -->|generates| APP_AP
-    APP_AP -->|creates| PROJ
-    PROJ   -->|"AppProject exists\nbefore apps need it"| ALL_APPS
-    APPSET -->|generates| ALL_APPS
-```
+> Source: [`src/06b-self-reference.d2`](src/06b-self-reference.d2) — render with `make` in this directory.
 
 ## Bootstrap checklist
 

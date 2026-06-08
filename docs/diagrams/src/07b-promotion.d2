@@ -1,0 +1,33 @@
+direction: right
+
+classes: {
+  dev:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+  test: {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  prod: {style.fill: "#fce4ec"; style.stroke: "#c62828"; style.font-color: "#000"}
+  git:  {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+}
+
+FB:   "feature\nbranch"  {class: git}
+MAIN: "main\nbranch"     {class: git}
+TAG:  "semver\ntag v1.2.0" {class: git}
+
+DEV: "dev clusters\nrdu-*-dev-*" {
+  class: dev
+  DEV_APP: "targetRevision:\nfeature/my-branch\nor HEAD" {class: dev}
+}
+
+TEST: "test clusters\nrdu-*-tst-*" {
+  class: test
+  TEST_APP: "targetRevision:\nHEAD" {class: test}
+}
+
+PROD: "prod clusters\nrdu-*-prd-*" {
+  class: prod
+  PROD_APP: "targetRevision:\nv1.2.0" {class: prod}
+}
+
+FB   -> DEV.DEV_APP:    "track branch\n(inner loop)"
+FB   -> MAIN:           "merge PR\n→ auto promotes"
+MAIN -> TEST.TEST_APP:  "track HEAD"
+MAIN -> TAG:            "cut tag\n(explicit release)"
+TAG  -> PROD.PROD_APP:  "update gate file\ntargetRevision"

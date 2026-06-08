@@ -1,0 +1,15 @@
+direction: right
+
+classes: {
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+  git:      {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  hub:      {style.fill: "#ede7f6"; style.stroke: "#4527a0"; style.font-color: "#000"}
+}
+
+P: "platform-owned config\n(not app-specific)" {class: platform}
+A: "app-team-owned config"                      {class: appteam}
+G: "git / source of truth"                      {class: git}
+R: "Argo CD component"                          {class: argo}
+H: "hub / management cluster"                   {class: hub}

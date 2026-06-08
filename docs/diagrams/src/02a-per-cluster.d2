@@ -1,0 +1,32 @@
+direction: right
+
+classes: {
+  git:      {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+}
+
+GIT: "openshift-gitops\ngit repo" {
+  shape: cylinder
+  class: git
+}
+
+SNO: "«cluster» k8s-sno" {
+  style.fill: "#f8f9fa"
+  OP: "«operator»\nopenshift-gitops" {class: argo}
+  ARGOCD: "«kind: ArgoCD» platform" {
+    style.fill: "#fffde7"
+    APPSET:  "«argo-appset»\napp-of-apps\nelements:\n  - clusterName: k8s-sno" {class: argo}
+    APPS_P:  "«argo-app»\nplatform configs"                                      {class: platform}
+    APPS_A:  "«argo-app»\napp-team configs"                                      {class: appteam}
+  }
+  K8S_P: "«k8s objects»\nplatform"  {class: platform}
+  K8S_A: "«k8s objects»\napp-team"  {class: appteam}
+}
+
+GIT             -> SNO.ARGOCD.APPSET: "clusters/k8s-sno/*.yaml"
+SNO.ARGOCD.APPSET -> SNO.ARGOCD.APPS_P: "generates"
+SNO.ARGOCD.APPSET -> SNO.ARGOCD.APPS_A: "generates"
+SNO.ARGOCD.APPS_P -> SNO.K8S_P: "reconciles"
+SNO.ARGOCD.APPS_A -> SNO.K8S_A: "reconciles"
