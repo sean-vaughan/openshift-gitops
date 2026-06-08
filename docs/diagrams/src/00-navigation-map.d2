@@ -1,0 +1,32 @@
+direction: right
+
+classes: {
+  git:     {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:    {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  cluster: {style.fill: "#f5f5f5"; style.stroke: "#757575"; style.font-color: "#000"}
+  profile: {style.fill: "#f3e5f5"; style.stroke: "#6a1b9a"; style.font-color: "#000"}
+}
+
+SRC: "Source of truth" {
+  GIT:      "git repo\nopenshift-gitops"          {class: git}
+  PROFILES: "profiles/\nteams · cluster-types\ndata-centers" {class: profile}
+}
+
+ENGINE: "Argo CD engine (per-cluster or hub)" {
+  APPSET:   "app-of-apps\nApplicationSet" {class: argo}
+  APPS:     "Argo CD\nApplications"       {class: argo}
+  APPPROJ:  "AppProjects\n& RBAC"         {class: argo}
+}
+
+CLUSTERS: "Managed clusters" {
+  C1: "rdu-sno-dev-1"    {class: cluster}
+  CN: "rdu-app-prd-1\n…" {class: cluster}
+}
+
+SRC.GIT      -> ENGINE.APPSET:  "gate files\nclusters/{cluster}/*.yaml"
+SRC.GIT      -> ENGINE.APPS:    "app sources\nsources/{app}/"
+SRC.PROFILES -> ENGINE.APPPROJ: "team + cluster-type\ndefaults"
+ENGINE.APPSET  -> ENGINE.APPS:    "generates"
+ENGINE.APPPROJ -> ENGINE.APPS:    "governs"
+ENGINE.APPS    -> CLUSTERS.C1:    "reconciles"
+ENGINE.APPS    -> CLUSTERS.CN:    "reconciles"
