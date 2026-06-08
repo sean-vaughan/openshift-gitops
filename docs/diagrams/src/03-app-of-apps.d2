@@ -1,0 +1,43 @@
+direction: down
+
+classes: {
+  git:      {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  override: {style.fill: "#fff3e0"; style.stroke: "#ef6c00"; style.font-color: "#000"}
+}
+
+GIT: "openshift-gitops (git)" {
+  direction: right
+  ELEMENTS: "clusters/k8s-sno/app-of-apps/kustomization.yaml\n\nelements:\n  - clusterName: k8s-sno"            {class: git}
+  GATE_AO:  "clusters/k8s-sno/app-of-apps.yaml\n\nspec:\n  source:\n    path: clusters/k8s-sno/app-of-apps"    {class: override}
+  GATE_AP:  "clusters/k8s-sno/app-projects.yaml\n\nspec:\n  source:\n    helm:\n      valueFiles: [platform.yaml]" {class: override}
+  GATE_X:   "clusters/k8s-sno/my-app.yaml\n\n{} ← all defaults"                                                {class: git}
+  SOURCES:  "sources/{app}/\n«app configs»"                                                                      {class: git}
+}
+
+APPSET: "«argo-appset» app-of-apps" {
+  GEN_LIST: "list generator\n\nclusterName: k8s-sno"                                {class: argo}
+  GEN_GIT:  "git files generator\n\nclusters/k8s-sno/*.yaml"                       {class: argo}
+  MATRIX:   "matrix\n(cartesian product)"                                           {class: argo}
+  TEMPLATE: "template\n\nname: k8s-sno---{project}---{app}\ndest: k8s-sno\nsource: sources/{app}\nsyncPolicy: automated" {class: argo}
+  PATCH:    "templatePatch\n\nmerges gate file\nmetadata + spec\non top of template" {class: argo}
+
+  GEN_LIST -> MATRIX
+  GEN_GIT  -> MATRIX
+  MATRIX   -> TEMPLATE
+  TEMPLATE -> PATCH
+}
+
+APPS_AO: "«argo-app»\nk8s-sno---platform---app-of-apps\n\nsource → clusters/k8s-sno/app-of-apps/\nprune: false, selfHeal: false" {class: override}
+APPS_AP: "«argo-app»\nk8s-sno---platform---app-projects\n\nsource → sources/app-projects\nhelm.valueFiles: platform.yaml"       {class: platform}
+APPS_X:  "«argo-app»\nk8s-sno---platform---my-app\n\nsource → sources/my-app\nall org defaults"                                 {class: git}
+
+GIT.ELEMENTS -> APPSET.GEN_LIST
+GIT.GATE_AO  -> APPSET.GEN_GIT
+GIT.GATE_AP  -> APPSET.GEN_GIT
+GIT.GATE_X   -> APPSET.GEN_GIT
+APPSET.PATCH -> APPS_AO
+APPSET.PATCH -> APPS_AP
+APPSET.PATCH -> APPS_X
+GIT.SOURCES  -> APPS_X

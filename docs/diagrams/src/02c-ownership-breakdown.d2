@@ -1,0 +1,19 @@
+direction: right
+
+classes: {
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+}
+
+OWN: "Configuration ownership" {
+  direction: right
+  P_GENERIC:  "platform-owned\nnot app-specific\n\nrbac, oauth, splunk,\nF5 CIS, etc."                          {class: platform}
+  P_SPECIFIC: "platform-owned\napp-specific\n\napp-n argocd\napp-n RBAC\nldapsync, etc."                         {class: platform}
+  A_OWN:      "app-team-owned\n\napp-n configs\nkafka topics\ndatasync jobs…"                                    {class: appteam}
+}
+
+DEST: "destination clusters" {style.fill: "#f5f5f5"}
+
+OWN.P_GENERIC  -> DEST: "deployed by\nplatform app-of-apps"
+OWN.P_SPECIFIC -> DEST: "deployed by\nbusiness app-of-apps"
+OWN.A_OWN      -> DEST: "deployed by\nteam's own Argo CD\n(app-team dashboard)"

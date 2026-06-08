@@ -1,0 +1,26 @@
+direction: right
+
+classes: {
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  manual:   {style.fill: "#fce4ec"; style.stroke: "#c62828"; style.font-color: "#000"}
+}
+
+MANUAL: "oc apply -k\nclusters/k8s-sno/app-of-apps/\n\n(one-time manual step)" {class: manual}
+
+APPSET:  "«argo-appset»\napp-of-apps"                                       {class: argo}
+APP_AO:  "«argo-app»\nk8s-sno---platform---app-of-apps\n\nprune: false\nselfHeal: false" {class: argo}
+SECRET:  "«Secret»\nk8s-sno-cluster\n\nargocd.argoproj.io/secret-type: cluster" {class: platform}
+APP_AP:  "«argo-app»\nk8s-sno---platform---app-projects"                    {class: argo}
+PROJ:    "«AppProject»\nplatform"                                            {class: platform}
+ALL_APPS:"all other\n«argo-apps»"                                            {class: argo}
+
+MANUAL  -> APPSET:  "delivers"
+MANUAL  -> SECRET:  "delivers"
+SECRET  -> APPSET:  "enables Argo CD to generate\nApplications for k8s-sno"
+APPSET  -> APP_AO:  "generates"
+APP_AO  -> APPSET:  "self-manages\nApplicationSet"
+APPSET  -> APP_AP:  "generates"
+APP_AP  -> PROJ:    "creates"
+PROJ    -> ALL_APPS: "AppProject exists\nbefore apps need it"
+APPSET  -> ALL_APPS: "generates"

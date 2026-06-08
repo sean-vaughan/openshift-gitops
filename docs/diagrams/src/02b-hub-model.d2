@@ -1,0 +1,51 @@
+direction: right
+
+classes: {
+  git:      {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+  hub:      {style.fill: "#ede7f6"; style.stroke: "#4527a0"; style.font-color: "#000"}
+  policy:   {style.fill: "#fce4ec"; style.stroke: "#c62828"; style.font-color: "#000"}
+}
+
+GIT: "openshift-gitops\ngit repo" {shape: cylinder; class: git}
+
+MGMT: "«hub cluster» mgmt" {
+  style.fill: "#f3e5f5"
+  ACM:    "«ACM»"                                                              {class: hub}
+  POLICY: "«policy»\nopenshift-gitops\n\nmanaged cluster label:\nopenshift-gitops=true" {class: policy}
+}
+
+TOOLS: "«tools cluster» tools" {
+  style.fill: "#fffde7"
+  APPSET_P: "«argo-appset»\nplatform app-of-apps" {class: argo}
+  APPSET_B: "«argo-appset»\nbusiness app-of-apps" {class: argo}
+  APPS_P:   "«argo-app»\nconfig(n)…"              {class: platform}
+  APPS_B:   "«argo-app»\nbusiness_app(n)"         {class: appteam}
+}
+
+KAFKA: "«cluster» kafka" {
+  style.fill: "#f8f9fa"
+  K8S_P1:   "«k8s objects»\nconfig(n)"        {class: platform}
+  K8S_RBAC: "«k8s objects»\nRBAC, ldapsync…"  {class: platform}
+  K8S_A1:   "«k8s objects»\napp-n"            {class: appteam}
+}
+
+APP_N: "«cluster» app-n" {
+  style.fill: "#f8f9fa"
+  K8S_P2: "«k8s objects»\nconfig(n)" {class: platform}
+  K8S_A2: "«k8s objects»\napp-n"     {class: appteam}
+}
+
+MGMT.ACM -> TOOLS:         "policy-enforcement\nbased on cluster labels"
+MGMT.ACM -> KAFKA:         "policy-enforcement\nbased on cluster labels"
+GIT       -> TOOLS.APPSET_P: "clusters/kafka/*.yaml\nclusters/app-n/*.yaml"
+GIT       -> TOOLS.APPSET_B: "clusters/kafka/*.yaml\nclusters/app-n/*.yaml"
+TOOLS.APPSET_P -> TOOLS.APPS_P: "deploys\nbased on platform cluster labels"
+TOOLS.APPSET_B -> TOOLS.APPS_B: "deploys\nbased on app cluster label"
+TOOLS.APPS_P -> KAFKA.K8S_P1:  "reconciles"
+TOOLS.APPS_P -> APP_N.K8S_P2:  "reconciles"
+TOOLS.APPS_B -> KAFKA.K8S_RBAC: "reconciles"
+TOOLS.APPS_B -> KAFKA.K8S_A1:  "reconciles"
+TOOLS.APPS_B -> APP_N.K8S_A2:  "reconciles"

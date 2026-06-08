@@ -1,0 +1,22 @@
+direction: right
+
+classes: {
+  idea:    {style.fill: "#fff9c4"; style.stroke: "#f9a825"; style.font-color: "#000"}
+  cluster: {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+  git:     {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:    {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+}
+
+IDEA:   "Have an idea"                                                        {class: idea}
+TRY:    "Try on cluster\n\nArgo CD UI\noc apply\nhelm install\n\n(no git required)" {class: cluster}
+WORKS:  "Does it work?" {shape: diamond; style.fill: "#f5f5f5"}
+COMMIT: "Commit to\nsources/{app}/\nfeature branch\n\n(capture what works)"  {class: git}
+GATE:   "Add gate file\nclusters/{cluster}/{app}.yaml\n\n(ready for\ncontinuous reconciliation)" {class: argo}
+DONE:   "Argo CD\nreconciles it\nforever"                                     {class: argo}
+
+IDEA   -> TRY
+TRY    -> WORKS
+WORKS  -> TRY:    "no — iterate"
+WORKS  -> COMMIT: "yes"
+COMMIT -> GATE
+GATE   -> DONE

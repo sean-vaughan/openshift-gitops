@@ -1,0 +1,17 @@
+shape: sequence_diagram
+
+OPS: "Operator" {shape: person}
+GIT: "git repo"
+K8S: "cluster (k8s-sno)"
+ARGO: "Argo CD"
+
+OPS -> GIT: "commit clusters/k8s-sno/app-of-apps/"
+OPS -> K8S: "oc apply -k clusters/k8s-sno/app-of-apps/"
+K8S -> ARGO: "ApplicationSet created"
+K8S -> ARGO: "cluster secret k8s-sno registered"
+ARGO -> GIT: "poll clusters/k8s-sno/*.yaml"
+GIT -> ARGO: "app-of-apps.yaml, app-projects.yaml, …"
+ARGO -> ARGO: "generate Applications from gate files"
+ARGO -> K8S: "sync app-of-apps Application"
+ARGO -> K8S: "sync app-projects Application"
+ARGO -> K8S: "sync all other Applications"

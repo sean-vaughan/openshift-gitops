@@ -7,50 +7,9 @@ The ApplicationSet uses a **matrix generator**: a list of clusters × a git file
 scanner over `clusters/<clusterName>/*.yaml`. Each combination of (cluster, gate
 file) produces one Argo CD Application.
 
-```mermaid
-%%{init: {'flowchart': {'curve': 'step', 'padding': 20}}}%%
-flowchart TD
-    classDef git      fill:#e3f2fd,stroke:#1565c0,color:#000
-    classDef argo     fill:#fff8e1,stroke:#e65100,color:#000
-    classDef platform fill:#eceff1,stroke:#546e7a,color:#000
-    classDef appteam  fill:#e8f5e9,stroke:#2e7d32,color:#000
-    classDef override fill:#fff3e0,stroke:#ef6c00,color:#000
+![App-of-Apps Internals](img/03-app-of-apps.svg)
 
-    subgraph GIT["openshift-gitops (git)"]
-        direction LR
-        ELEMENTS["clusters/k8s-sno/\napp-of-apps/\nkustomization.yaml\n\nelements:\n  - clusterName: k8s-sno"]:::git
-        GATE_AO["clusters/k8s-sno/\napp-of-apps.yaml\n\nspec:\n  source:\n    path: clusters/k8s-sno/app-of-apps"]:::override
-        GATE_AP["clusters/k8s-sno/\napp-projects.yaml\n\nspec:\n  source:\n    helm:\n      valueFiles: [platform.yaml]"]:::override
-        GATE_X["clusters/k8s-sno/\nmy-app.yaml\n\n{} ← all defaults"]:::git
-        SOURCES["sources/{app}/\n«app configs»"]:::git
-    end
-
-    subgraph APPSET["«argo-appset» app-of-apps"]
-        direction TB
-        GEN_LIST["list generator\n\nclusterName: k8s-sno"]:::argo
-        GEN_GIT["git files generator\n\nclusters/k8s-sno/*.yaml"]:::argo
-        MATRIX["matrix\n(cartesian product)"]:::argo
-        TEMPLATE["template\n\nname: k8s-sno---{project}---{app}\ndest: k8s-sno\nsource: sources/{app}\nsyncPolicy: automated"]:::argo
-        PATCH["templatePatch\n\nmerges gate file\nmetadata + spec\non top of template"]:::argo
-    end
-
-    APPS_AO["«argo-app»\nk8s-sno---platform---app-of-apps\n\nsource → clusters/k8s-sno/app-of-apps/\nprune: false, selfHeal: false"]:::override
-    APPS_AP["«argo-app»\nk8s-sno---platform---app-projects\n\nsource → sources/app-projects/chart\nhelm.valueFiles: platform.yaml"]:::platform
-    APPS_X["«argo-app»\nk8s-sno---platform---my-app\n\nsource → sources/my-app\nall org defaults"]:::git
-
-    ELEMENTS  --> GEN_LIST
-    GATE_AO   --> GEN_GIT
-    GATE_AP   --> GEN_GIT
-    GATE_X    --> GEN_GIT
-    GEN_LIST  --> MATRIX
-    GEN_GIT   --> MATRIX
-    MATRIX    --> TEMPLATE
-    TEMPLATE  --> PATCH
-    PATCH     --> APPS_AO
-    PATCH     --> APPS_AP
-    PATCH     --> APPS_X
-    SOURCES   --> APPS_X
-```
+> Source: [`src/03-app-of-apps.d2`](src/03-app-of-apps.d2) — render with `make` in this directory.
 
 ## Gate file anatomy
 

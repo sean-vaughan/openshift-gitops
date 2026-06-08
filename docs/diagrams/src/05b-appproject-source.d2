@@ -1,0 +1,22 @@
+direction: right
+
+classes: {
+  git:      {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+}
+
+CHART: "sources/app-projects/\n«Helm chart»\n\ntemplate: AppProject\nwith 3 roles per team\n(RBAC org default)" {class: argo}
+
+VALUES_P: "sources/app-projects/platform.yaml\n\nprojects:\n  - name: platform\n    teams:\n      - name: platform\n        adminsGroup: platform-admins\n        …"                                                {class: platform}
+
+VALUES_A: "sources/app-projects/app-team.yaml\n\nprojects:\n  - name: app-team\n    teams:\n      - name: app-team\n        destinations:\n          - namespace: app-team-*\n        clusterResourceWhitelist: []" {class: appteam}
+
+PROJ_P: "«AppProject»\nplatform"  {class: platform}
+PROJ_A: "«AppProject»\napp-team"  {class: appteam}
+
+CHART    -> PROJ_P: "helm template"
+CHART    -> PROJ_A: "helm template"
+VALUES_P -> PROJ_P: "values"
+VALUES_A -> PROJ_A: "values"

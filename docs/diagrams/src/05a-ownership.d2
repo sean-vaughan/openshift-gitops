@@ -1,0 +1,45 @@
+direction: down
+
+classes: {
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+  argo:     {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  ldap:     {style.fill: "#e8eaf6"; style.stroke: "#3949ab"; style.font-color: "#000"}
+}
+
+LDAP: "LDAP / Identity Provider" {
+  GRP_PA: "platform-admins"     {class: ldap}
+  GRP_PD: "platform-developers" {class: ldap}
+  GRP_PV: "platform-viewers"    {class: ldap}
+  GRP_AA: "app-team-admins"     {class: ldap}
+  GRP_AD: "app-team-developers" {class: ldap}
+  GRP_AV: "app-team-viewers"    {class: ldap}
+}
+
+PROJ_P: "«AppProject» platform" {
+  ROLE_PA: "role: platform-admins\npolicies: applications, *, platform/*"          {class: platform}
+  ROLE_PD: "role: platform-developers\npolicies: get + sync + override, platform/*" {class: platform}
+  ROLE_PV: "role: platform-viewers\npolicies: get, platform/*"                     {class: platform}
+}
+
+PROJ_A: "«AppProject» app-team" {
+  ROLE_AA: "role: app-team-admins\npolicies: applications, *, app-team/*"          {class: appteam}
+  ROLE_AD: "role: app-team-developers\npolicies: get + sync + override, app-team/*" {class: appteam}
+  ROLE_AV: "role: app-team-viewers\npolicies: get, app-team/*"                     {class: appteam}
+}
+
+APPS_P: "«argo-apps»\nk8s-sno---platform---*" {class: platform}
+APPS_A: "«argo-apps»\nk8s-sno---app-team---*" {class: appteam}
+NS_P:   "platform namespaces"                  {class: platform}
+NS_A:   "app-team namespaces"                  {class: appteam}
+
+LDAP.GRP_PA -> PROJ_P.ROLE_PA
+LDAP.GRP_PD -> PROJ_P.ROLE_PD
+LDAP.GRP_PV -> PROJ_P.ROLE_PV
+LDAP.GRP_AA -> PROJ_A.ROLE_AA
+LDAP.GRP_AD -> PROJ_A.ROLE_AD
+LDAP.GRP_AV -> PROJ_A.ROLE_AV
+PROJ_P -> APPS_P: "governs"
+PROJ_A -> APPS_A: "governs"
+PROJ_P.ROLE_PA -> NS_P: "OpenShift\nadmin role"
+PROJ_A.ROLE_AA -> NS_A: "OpenShift\nadmin role"

@@ -1,0 +1,34 @@
+direction: down
+
+classes: {
+  git:  {style.fill: "#e3f2fd"; style.stroke: "#1565c0"; style.font-color: "#000"}
+  argo: {style.fill: "#fff8e1"; style.stroke: "#e65100"; style.font-color: "#000"}
+  k8s:  {style.fill: "#f5f5f5"; style.stroke: "#9e9e9e"; style.font-color: "#000"}
+  platform: {style.fill: "#eceff1"; style.stroke: "#546e7a"; style.font-color: "#000"}
+  appteam:  {style.fill: "#e8f5e9"; style.stroke: "#2e7d32"; style.font-color: "#000"}
+}
+
+K8S: "Layer 1 — Kubernetes / Argo CD defaults\n\nrestartPolicy, resource defaults, ArgoCD Application defaults\n(outside this repo's scope — Kubernetes owns these)" {
+  class: k8s
+}
+
+ORG: "Layer 2 — Org defaults\nsources/app-of-apps/applicationset.yaml template\n\nExamples:\n  syncPolicy: automated + prune + selfHeal\n  destination.namespace: openshift-gitops\n  project: platform\n  AppProject RBAC structure: 3 roles per team" {
+  class: argo
+}
+
+PROFILE: "Layer 3 — Profile overrides\nprofiles/teams/{team}/\nprofiles/cluster-types/{type}/\nprofiles/data-centers/{dc}/\n\nExamples:\n  team AppProject destinations restricted to own namespaces\n  cluster-type adds specific app-group\n  data-center sets storage class name" {
+  class: platform
+}
+
+GATE: "Layer 4 — Per-cluster-per-app gate file\nclusters/{cluster}/{app}.yaml\n\nExamples:\n  source.targetRevision: feature/my-branch\n  source.repoURL: https://github.com/my-team/apps.git\n  syncPolicy.automated: null  (disable auto-sync for prod)" {
+  class: appteam
+}
+
+RESULT: "«argo-app»\nk8s-sno---platform---my-app\n\nfully resolved Configuration" {
+  class: argo
+}
+
+K8S     -> ORG:     "base defaults\n(implicit)"
+ORG     -> PROFILE: "org defaults\n(explicit, one place)"
+PROFILE -> GATE:    "profile overrides\n(per team / type / dc)"
+GATE    -> RESULT:  "final resolved\nApplication spec"
