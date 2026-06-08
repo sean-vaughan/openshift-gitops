@@ -1,5 +1,6 @@
 
 resources:
+- presync-csv-cleanup.yaml
 - provisioning.yaml
 - agent-service-config.yaml # Update manifest for disconnected environments
 # - mirror-config.yaml # Uncomment and update appropriately for disconnected environments

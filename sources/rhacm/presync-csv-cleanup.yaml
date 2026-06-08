@@ -1,0 +1,87 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csv-cleanup
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: csv-cleanup
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+rules:
+  - apiGroups: [operators.coreos.com]
+    resources: [clusterserviceversions]
+    verbs: [get, list, delete]
+  - apiGroups: [operators.coreos.com]
+    resources: [subscriptions]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: csv-cleanup
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: csv-cleanup
+subjects:
+  - kind: ServiceAccount
+    name: csv-cleanup
+    namespace: open-cluster-management
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: presync-csv-cleanup
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    spec:
+      serviceAccountName: csv-cleanup
+      restartPolicy: Never
+      containers:
+        - name: cleanup
+          image: registry.hub.docker.com/savughan/openshift-toolbox:latest
+          command: [/bin/bash, -c]
+          args:
+            - |
+              set -euo pipefail
+              NAMESPACE="open-cluster-management"
+              PACKAGE="advanced-cluster-management"
+
+              CSVS=$(oc get csv -n "$NAMESPACE" \
+                -l "operators.coreos.com/${PACKAGE}.${NAMESPACE}" \
+                -o name 2>/dev/null || true)
+
+              if [ -z "$CSVS" ]; then
+                echo "No CSVs found for $PACKAGE in $NAMESPACE — nothing to do"
+                exit 0
+              fi
+
+              for CSV_PATH in $CSVS; do
+                CSV_NAME="${CSV_PATH#*/}"
+                REFERENCED=$(oc get subscription -n "$NAMESPACE" \
+                  -o jsonpath='{range .items[*]}{.status.currentCSV}{"\n"}{.status.installedCSV}{"\n"}{end}' \
+                  2>/dev/null | grep -Fx "$CSV_NAME" || true)
+                if [ -z "$REFERENCED" ]; then
+                  echo "Deleting orphaned CSV: $CSV_NAME"
+                  oc delete "$CSV_PATH" -n "$NAMESPACE"
+                else
+                  echo "CSV $CSV_NAME is referenced — skipping"
+                fi
+              done

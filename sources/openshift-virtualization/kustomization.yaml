@@ -1,5 +1,5 @@
-
 resources:
   - subscription.yaml
   - operator-group.yaml
+  - hyperconverged.yaml
   - presync-csv-cleanup.yaml
