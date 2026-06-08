@@ -1,0 +1,121 @@
+# ADR-0008: CI linting and ADR compliance checks
+
+- **Status**: Accepted
+- **Date**: 2026-06-07
+
+## Context
+
+This repo is the source of truth for all cluster configurations. A bad commit —
+a malformed YAML file, a subscription that pins a CSV version, a gate file with
+an unrecognized top-level key — can cause Argo CD sync failures across every
+cluster that references it. Without automated checks, these errors are caught by
+cluster observations rather than at merge time.
+
+The ADRs in this repo encode structural invariants (naming conventions, cascade
+rules, prohibited patterns) that are currently enforced only by convention and
+code review. Some of these invariants are fully mechanical and can be checked by
+a script; others require understanding of organizational intent and must remain
+human or AI judgment calls.
+
+## Decision
+
+### Tooling
+
+| Concern | Tool | Config file |
+|---|---|---|
+| YAML syntax and style | yamllint | `.yamllint.yaml` |
+| Markdown style | markdownlint-cli2 | `.markdownlint.yaml` |
+| Shell scripts | shellcheck | inline (no config needed) |
+| Kubernetes schema validation | kubeconform | inline flags |
+| Kustomize overlay rendering | `kustomize build` + kubeconform | inline |
+| Helm chart correctness | `helm lint --strict` | inline |
+| Kubernetes best practices | kube-linter | `.kube-linter.yaml` |
+| ADR structural invariants | custom script | `.github/scripts/adr-compliance.sh` |
+| Mermaid diagram syntax | mermaid-cli | inline |
+
+All checks run in `.github/workflows/ci.yaml` on every pull request to `main`
+and on direct pushes to `main`.
+
+### CRD schema coverage (kubeconform)
+
+kubeconform uses two schema sources:
+
+1. **Upstream Kubernetes schemas** — built-in to kubeconform, covers core API
+   objects (Namespace, ClusterRoleBinding, etc.).
+2. **datreeio/CRDs-catalog** — community-maintained catalog of popular CRD
+   schemas, covers Argo CD (Application, ApplicationSet), OLM
+   (Subscription, OperatorGroup), RHACM, and OpenShift-specific resources.
+
+`-ignore-missing-schemas` is set so that a CRD not in either catalog does not
+block CI — it produces a warning, not a failure. This is the correct trade-off
+for a platform repo that consumes many operators.
+
+### What the ADR compliance script checks (automatable)
+
+The script at `.github/scripts/adr-compliance.sh` enforces:
+
+| Check | ADR | Mechanism |
+|---|---|---|
+| Gate file names are RFC 1123 compatible | 0002 | `[[ filename =~ ^[a-z0-9]... ]]` |
+| Production cluster dirs match `<dc>-<type>-<env>-<n>` | 0007 | regex + env segment validation |
+| Gate files contain only `metadata`/`spec` top-level keys | 0003 | python3 yaml.safe_load |
+| No `startingCSV` in `sources/` | 0003 | grep |
+| Each `sources/<app>/` has an entry point (kustomize/helm/yaml) | 0001 | find |
+| Each `clusters/<cluster>/` has `app-of-apps.yaml` | 0005 | file existence check |
+
+### What requires periodic agent review (not automatable in CI)
+
+The following invariants require judgment that static analysis cannot provide.
+They should be reviewed periodically by an AI agent or a human platform reviewer
+(suggested cadence: quarterly or before major releases):
+
+| Concern | ADR | Why not automatable |
+|---|---|---|
+| Gate files only override what genuinely differs from org defaults | 0003 | Requires knowing *intent* — was the override deliberate or cargo-culted? |
+| AppProject assignments match team ownership | 0002, 0003 | Requires cross-referencing team roster (LDAP) against AppProject membership |
+| `targetRevision` overrides in gate files are intentional | 0006 | Hard-codes a branch/tag — correct for prod, suspicious in dev gate files |
+| `repoURL` overrides point to trusted repositories | 0006 | Requires policy judgment on which repos are trusted |
+| `sources/<app>/` is organized by app, not by delivery tool | 0001 | Requires semantic understanding of directory purpose |
+| Cluster-type profile compositions are complete and non-redundant | 0003 | Requires understanding of the intended cluster-type taxonomy |
+| New CRD schemas not yet in the CRDs-catalog are correctly formed | — | kubeconform skips unknown schemas; manual review required |
+
+### Diagram workflow
+
+The pre-rendered PNGs in `docs/diagrams/img/` are committed artifacts generated
+from the Mermaid source in the Markdown files. CI validates that the Mermaid
+syntax is parseable but does not re-render PNGs (rendering is a local developer
+step). If a diagram source is modified, the developer must re-render and commit
+the updated PNG alongside the source change.
+
+## Consequences
+
+**Positive:**
+
+- Syntax errors, schema violations, and prohibited patterns (startingCSV) are
+  caught at PR time before they can affect clusters.
+- The structural invariants encoded in the ADRs are machine-checked, reducing
+  the review burden on human reviewers.
+- The distinction between automatable and agent-reviewable checks is documented,
+  providing a clear scope for future automation.
+
+**Negative / constraints:**
+
+- CI adds latency to the merge path. The jobs are parallelized to minimize this.
+- kubeconform's CRD catalog may lag behind new OpenShift/operator CRD versions.
+  `-ignore-missing-schemas` mitigates blocking merges but means new CRD types
+  get no schema validation until the catalog is updated.
+- The custom ADR compliance script is a shell script — it must be maintained as
+  the ADRs evolve. ADR authors are responsible for updating the script when new
+  automatable invariants are introduced.
+- Mermaid diagram re-rendering is a manual developer step and is not enforced in
+  CI (PNG staleness is not caught automatically).
+
+## Related
+
+- ADR-0001: Organize sources by application, not delivery tool
+- ADR-0002: Application naming convention
+- ADR-0003: Organizational defaults over boilerplate
+- ADR-0006: Development workflow and environment promotion
+- ADR-0007: Cluster naming convention
+- `.github/workflows/ci.yaml`
+- `.github/scripts/adr-compliance.sh`

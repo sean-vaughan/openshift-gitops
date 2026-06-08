@@ -1,0 +1,237 @@
+---
+# CI workflow for openshift-gitops
+# Runs on every pull request to main and on direct pushes to main.
+#
+# Jobs:
+#   lint-yaml          — yamllint on all YAML files
+#   lint-markdown      — markdownlint on all Markdown files
+#   lint-shell         — shellcheck on all shell scripts
+#   validate-manifests — kubeconform schema validation (plain YAML + Kustomize)
+#   lint-helm          — helm lint on Helm chart sources
+#   kube-linter        — kube-linter best-practices check
+#   adr-compliance     — ADR static compliance checks (custom script)
+#   diagrams           — verify docs/diagrams/ Mermaid diagrams render
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # --------------------------------------------------------------------------
+  # 1. YAML lint
+  # --------------------------------------------------------------------------
+  lint-yaml:
+    name: YAML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: .yamllint.yaml
+          file_or_dir: .
+          strict: false
+
+  # --------------------------------------------------------------------------
+  # 2. Markdown lint
+  # --------------------------------------------------------------------------
+  lint-markdown:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          config: .markdownlint.yaml
+          globs: "**/*.md"
+
+  # --------------------------------------------------------------------------
+  # 3. Shell lint
+  # --------------------------------------------------------------------------
+  lint-shell:
+    name: Shell lint (shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: .
+          severity: warning
+          ignore_paths: >-
+            .git
+            vendor
+
+  # --------------------------------------------------------------------------
+  # 4. Kubernetes manifest schema validation (kubeconform)
+  # Validates plain YAML and Kustomize-rendered manifests against upstream
+  # Kubernetes JSON schemas plus OpenShift/Argo CD CRD schemas.
+  # --------------------------------------------------------------------------
+  validate-manifests:
+    name: Manifest schema validation (kubeconform)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          KUBECONFORM_VERSION=v0.6.7
+          curl -sSLo /tmp/kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          tar -xzf /tmp/kubeconform.tar.gz -C /usr/local/bin kubeconform
+          chmod +x /usr/local/bin/kubeconform
+
+      - name: Install kustomize
+        run: |
+          KUSTOMIZE_VERSION=v5.4.3
+          curl -sSLo /tmp/kustomize.tar.gz \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+          tar -xzf /tmp/kustomize.tar.gz -C /usr/local/bin
+          chmod +x /usr/local/bin/kustomize
+
+      - name: Validate plain YAML manifests in sources/
+        # Skip Helm charts (they have their own lint job) and kustomization.yaml
+        # files (not standalone manifests).
+        # Skip files containing Go template expressions (Helm/ApplicationSet
+        # templates) — kubeconform cannot parse them.
+        run: |
+          find sources/ -name "*.yaml" \
+            ! -path "*/templates/*" \
+            ! -name "kustomization.yaml" \
+            ! -name "Chart.yaml" \
+            ! -name "values.yaml" \
+            | xargs -r kubeconform \
+              -strict \
+              -ignore-missing-schemas \
+              -schema-location default \
+              -schema-location \
+                'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+              -output tap \
+              -verbose
+
+      - name: Validate Kustomize overlays (dry-run build)
+        # Build each cluster overlay and pipe through kubeconform.
+        # Rendering validates that all referenced resources exist and kustomize
+        # patches are syntactically valid.
+        run: |
+          EXIT=0
+          for kdir in $(find clusters/ -name "kustomization.yaml" -exec dirname {} \;); do
+            echo "--- kustomize build $kdir"
+            kustomize build "$kdir" 2>&1 | kubeconform \
+              -strict \
+              -ignore-missing-schemas \
+              -schema-location default \
+              -schema-location \
+                'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+              -output tap \
+              || { echo "FAIL: $kdir"; EXIT=1; }
+          done
+          exit $EXIT
+
+  # --------------------------------------------------------------------------
+  # 5. Helm lint
+  # Lints all Helm chart sources in sources/.
+  # --------------------------------------------------------------------------
+  lint-helm:
+    name: Helm lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm charts
+        run: |
+          EXIT=0
+          for chart_dir in $(find sources/ -name "Chart.yaml" -exec dirname {} \;); do
+            echo "--- helm lint $chart_dir"
+            helm lint "$chart_dir" --strict || { echo "FAIL: $chart_dir"; EXIT=1; }
+          done
+          exit $EXIT
+
+  # --------------------------------------------------------------------------
+  # 6. kube-linter (Kubernetes best-practices)
+  # --------------------------------------------------------------------------
+  kube-linter:
+    name: kube-linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run kube-linter on sources/
+        uses: stackrox/kube-linter-action@v1
+        with:
+          directory: sources/
+          config: .kube-linter.yaml
+          format: plain
+
+  # --------------------------------------------------------------------------
+  # 7. ADR compliance static checks
+  # Runs the custom script that validates naming conventions, gate file schema,
+  # and structural invariants derived from the ADRs.
+  # --------------------------------------------------------------------------
+  adr-compliance:
+    name: ADR compliance checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ADR compliance checks
+        run: bash .github/scripts/adr-compliance.sh --verbose
+
+  # --------------------------------------------------------------------------
+  # 8. Diagram validation
+  # Verifies that Mermaid diagrams in docs/diagrams/ can be parsed.
+  # The diagrams are Markdown files with fenced ```mermaid blocks; we use
+  # the official Mermaid CLI to validate them (no rendering — parse only).
+  # The pre-rendered PNGs in docs/diagrams/img/ are committed artifacts;
+  # this job checks that the source diagrams are still valid syntax.
+  # --------------------------------------------------------------------------
+  validate-diagrams:
+    name: Validate Mermaid diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Mermaid CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Extract and validate Mermaid blocks
+        run: |
+          EXIT=0
+          TMPDIR=$(mktemp -d)
+          # Extract all fenced mermaid blocks from Markdown files
+          python3 - <<'PYEOF'
+          import re, pathlib, sys, os
+
+          tmpdir = os.environ.get('TMPDIR', '/tmp')
+          pattern = re.compile(r'```mermaid\n(.*?)```', re.DOTALL)
+          errors = 0
+
+          for md_file in pathlib.Path('docs').rglob('*.md'):
+              text = md_file.read_text()
+              for i, match in enumerate(pattern.finditer(text)):
+                  out = pathlib.Path(tmpdir) / f"{md_file.stem}_{i}.mmd"
+                  out.write_text(match.group(1))
+
+          PYEOF
+
+          for mmd_file in "$TMPDIR"/*.mmd; do
+            echo "--- validating $mmd_file"
+            mmdc --input "$mmd_file" --output /dev/null 2>&1 || { echo "FAIL: $mmd_file"; EXIT=1; }
+          done
+          exit $EXIT
+        env:
+          TMPDIR: /tmp/mermaid-validate
