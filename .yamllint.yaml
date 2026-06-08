@@ -1,0 +1,38 @@
+---
+# yamllint configuration for openshift-gitops
+# https://yamllint.readthedocs.io/en/stable/configuration.html
+extends: default
+
+rules:
+  # Kubernetes/Helm YAML files routinely have long lines for field values
+  line-length:
+    max: 160
+    level: warning
+
+  # Allow both true/false and yes/no — Kubernetes uses true/false, but
+  # Helm values files sometimes appear with yes/no from generators
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+
+  # ApplicationSet goTemplate expressions use {{ }} which yamllint can mistake
+  # for YAML flow mappings — disable that check
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Helm templates and ApplicationSet templatePatch blocks use extra indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Allow multiple documents in a single file (---) — Kustomize resource lists
+  document-start:
+    present: false
+
+ignore: |
+  .git/
+  vendor/
+  node_modules/
+  docs/presentations/
