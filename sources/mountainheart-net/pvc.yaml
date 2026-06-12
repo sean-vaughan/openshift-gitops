@@ -1,0 +1,13 @@
+# Holds the static site (~45Mi) migrated from
+# cloud.vaughan.cc:/var/www/mountainheart.net.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: site-content
+  namespace: mountainheart-net
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,14 @@
+# Holds the full WordPress docroot (/var/www/html) migrated from
+# cloud.vaughan.cc:/var/www/fred.vaughan.cc — core, plugins, themes,
+# and ~11Gi of wp-content/uploads.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-html
+  namespace: fred-vaughan-cc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

@@ -1,0 +1,48 @@
+---
+# kube-linter configuration for openshift-gitops
+# https://docs.kubelinter.io/#/configuring-kubelinter
+#
+# kube-linter targets workload best-practices. This repo is primarily
+# Operator subscriptions, Argo CD CRDs, and platform configs — not user
+# workloads. We enable the checks that apply and suppress the ones that
+# are inapplicable to OLM/GitOps objects.
+
+checks:
+  # Start with the default set and selectively disable
+  addAllBuiltIn: true
+
+  exclude:
+    # Operator Subscriptions do not define Pod specs — these checks are
+    # not applicable to Subscription/OperatorGroup/CSV objects
+    - "no-read-only-root-fs"
+    - "run-as-non-root"
+    - "no-extensions-v1beta"
+    - "deprecated-service-account-field"
+    - "privilege-escalation-container"
+    - "non-isolated-pod"
+    - "drop-net-raw-capability"
+
+    # Argo CD Application/ApplicationSet objects are not workloads
+    - "required-label-app"
+
+    # Helm chart templates generate dynamic names — skip name length check
+    # that fires on Go template expressions
+    - "object-recommended-labels"
+
+    # Stateful single-replica workloads (e.g. sources/fred-vaughan-cc) use
+    # RWO PVCs: Recreate strategy and one replica are structural, not bugs.
+    # Lab clusters are single-node, so node affinity is meaningless.
+    - "minimum-three-replicas"
+    - "no-rolling-update-strategy"
+    - "no-node-affinity"
+
+    # SealedSecrets are this repo's secret mechanism; standard images
+    # (official wordpress, rhel9/sclorg mariadb) are configured exclusively
+    # via env vars. SCCs govern real privilege on OpenShift — the
+    # privileged-ports container-port check is noise under anyuid.
+    - "read-secret-from-env-var"
+    - "env-value-from"
+    - "privileged-ports"
+    - "dnsconfig-options"
+
+  customChecks: []

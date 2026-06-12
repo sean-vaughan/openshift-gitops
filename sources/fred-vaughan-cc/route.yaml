@@ -1,0 +1,23 @@
+# Public host. TLS terminates at the router with the Let's Encrypt
+# certificate issued by certificate.yaml (cut over 2026-06-12; DNS is
+# CNAME *.apps.k8s-sno.vaughan.cc in Route53). cert-manager renews the
+# secret; the router picks up renewals via externalCertificate.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: fred-vaughan-cc
+  namespace: fred-vaughan-cc
+  labels:
+    app: wordpress
+spec:
+  host: fred.vaughan.cc
+  to:
+    kind: Service
+    name: wordpress
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    externalCertificate:
+      name: fred-vaughan-cc-tls

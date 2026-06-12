@@ -1,0 +1,8 @@
+# mountainheart.net static site (sources/mountainheart-net).
+# Stateful app: prune disabled so a gate/source removal can never cascade
+# into deleting the namespace and the site-content PVC.
+spec:
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

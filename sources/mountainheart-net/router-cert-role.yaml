@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: router-read-mountainheart-net-tls
+  namespace: mountainheart-net
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [mountainheart-net-tls]
+    verbs: [get, list, watch]
