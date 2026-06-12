@@ -1,0 +1,6 @@
+# cert-manager operator + Let's Encrypt ClusterIssuers (sources/cert-manager),
+# delivered through the Argo CD overlay for the olm-csv-cleanup PreSync hook
+# (ADR-0011).
+spec:
+  source:
+    path: delivery/argo-cd/overlays/cert-manager

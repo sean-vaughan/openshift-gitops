@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: olm-csv-cleanup
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      serviceAccountName: olm-csv-cleanup
+      restartPolicy: OnFailure
+      containers:
+      - name: cleanup
+        image: registry.redhat.io/openshift4/ose-cli:latest
+        command:
+        - /bin/bash
+        - -euo
+        - pipefail
+        - -c
+        - |
+          # Collect the CSV name that the Subscription currently tracks.
+          CURRENT=$(oc get subscription -n "$NAMESPACE" \
+            -o jsonpath='{.items[*].status.currentCSV}' 2>/dev/null || true)
+
+          # Delete any CSV in the namespace that is not the current one.
+          oc get csv -n "$NAMESPACE" -o name 2>/dev/null | while read csv; do
+            name=$(basename "$csv")
+            if [[ -n "$CURRENT" && "$name" == "$CURRENT" ]]; then
+              echo "Keeping current CSV: $name"
+              continue
+            fi
+            echo "Deleting orphaned CSV: $name"
+            oc delete "$csv" -n "$NAMESPACE" --ignore-not-found
+          done
+          echo "CSV cleanup complete."
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi

@@ -1,0 +1,12 @@
+# Namespaced on purpose: the cleanup Job only inspects and deletes CSVs in
+# its own operator namespace, and a namespaced Role keeps the component
+# reusable — multiple applications can include it without contending over a
+# single fixed-name cluster-scoped binding.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: olm-csv-cleanup
+rules:
+- apiGroups: [operators.coreos.com]
+  resources: [clusterserviceversions, subscriptions, installplans]
+  verbs: [get, list, delete]

@@ -1,0 +1,3 @@
+# cert-manager-managed wildcard certificate for *.apps.k8s-sno.vaughan.cc.
+# Depends on sources/cert-manager (ClusterIssuer + Route 53 credentials secret).
+{}
