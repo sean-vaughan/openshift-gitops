@@ -1,0 +1,26 @@
+# The OpenShift router reads the defaultCertificate secret directly.
+# Grant the router service account access to the cert-manager-issued secret.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: router-cert-reader
+  namespace: openshift-ingress
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["apps-wildcard-tls"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: router-cert-reader
+  namespace: openshift-ingress
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: router-cert-reader
+subjects:
+  - kind: ServiceAccount
+    name: router
+    namespace: openshift-ingress

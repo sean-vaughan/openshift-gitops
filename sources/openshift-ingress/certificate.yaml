@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: apps-wildcard-tls
+  namespace: openshift-ingress
+  annotations:
+    # cert-manager CRD may not exist on a fresh cluster until cert-manager syncs.
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  secretName: apps-wildcard-tls
+  dnsNames:
+    - "*.apps.k8s-sno.vaughan.cc"
+  duration: 2160h   # 90 days (Let's Encrypt maximum)
+  renewBefore: 360h # renew 15 days before expiry
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
