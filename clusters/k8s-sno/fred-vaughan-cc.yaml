@@ -1,0 +1,8 @@
+# fred.vaughan.cc WordPress site (sources/fred-vaughan-cc).
+# Stateful app: prune disabled so a gate/source removal can never cascade
+# into deleting the namespace and its PVCs (11Gi of migrated uploads).
+spec:
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpd
+  namespace: mountainheart-net
+  labels:
+    app: httpd
+    owner: platform
+  annotations:
+    email: sean@vaughan.cc
+spec:
+  replicas: 1
+  # Recreate: site-content is RWO; a rolling update would deadlock on the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: httpd
+  template:
+    metadata:
+      labels:
+        app: httpd
+    spec:
+      restartPolicy: Always
+      serviceAccountName: httpd
+      containers:
+        - name: httpd
+          # sclorg-style image: runs as arbitrary UID under the restricted
+          # SCC, listens on 8080, serves /var/www/html.
+          image: registry.redhat.io/ubi9/httpd-24:1
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          # tcpSocket, not httpGet: the PVC starts empty (content is copied
+          # in after first deploy), and an httpGet probe would crash-loop
+          # the pod before the copy could happen.
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: content
+              mountPath: /var/www/html
+      volumes:
+        - name: content
+          persistentVolumeClaim:
+            claimName: site-content

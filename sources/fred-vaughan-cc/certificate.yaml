@@ -1,0 +1,18 @@
+# Let's Encrypt certificate for the public host. HTTP-01 validation can
+# only succeed once fred.vaughan.cc DNS points at this cluster's ingress
+# (see README — cutover); until then the Certificate stays Pending and
+# cert-manager keeps retrying. At DNS cutover it issues automatically.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fred-vaughan-cc-tls
+  namespace: fred-vaughan-cc
+  labels:
+    app: wordpress
+spec:
+  secretName: fred-vaughan-cc-tls
+  dnsNames:
+    - fred.vaughan.cc
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
