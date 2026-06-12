@@ -1,14 +1,7 @@
 # cert-manager
 
 cert-manager Operator for Red Hat OpenShift (OLM, `stable-v1` channel) plus
-two Let's Encrypt `ClusterIssuer`s:
-
-| Issuer | ACME endpoint | Use |
-|---|---|---|
-| `letsencrypt-staging` | acme-staging-v02 | Plumbing tests — untrusted chain, generous rate limits |
-| `letsencrypt-prod` | acme-v02 | Real certificates — strict rate limits |
-
-Both issuers have two solvers, tried in order:
+a `letsencrypt-prod` ClusterIssuer with two solvers, tried in order:
 
 | Solver | Challenge | Used for |
 |---|---|---|
@@ -92,14 +85,10 @@ account needs `get`/`list`/`watch` on that one secret — see
 ## Delivery
 
 Deployed directly from this source (default ApplicationSet path). The
-ClusterIssuers carry `SkipDryRunOnMissingResource` so a fresh cluster can
-sync before the operator has installed the CRDs.
+ClusterIssuer carries `SkipDryRunOnMissingResource` so a fresh cluster can
+sync before the operator has installed the CRD.
 
 ## ACME account notes
 
-- Account private keys live in secrets `acme-private-key` (staging) and
-  `acme-private-key-prod` (prod) in the `cert-manager` namespace, created
-  by cert-manager on first registration.
-- The staging account predates GitOps adoption (registered 2025-09); the
-  `email` field was added later and cert-manager updates the registration
-  in place.
+- Account private key lives in `secret/acme-private-key-prod` in the
+  `cert-manager` namespace, created by cert-manager on first registration.
