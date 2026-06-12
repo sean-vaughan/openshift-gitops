@@ -99,6 +99,18 @@ spec:
       kinds:
       - TaskRun
       - PipelineRun
+    # clusterview.open-cluster-management.io is an aggregated API served by MCE's
+    # ocm-proxyserver, exposing read-only projected views (never deployed from this
+    # repo). Its OpenAPI schema intermittently drops the UserPermissionStatus model
+    # referenced by UserPermission.status; when that happens Argo's cluster cache
+    # can't build against the broken schema, comparison fails, and every app goes to
+    # sync Unknown. Excluding the group keeps the proxy API out of the cache entirely.
+    - apiGroups:
+      - clusterview.open-cluster-management.io
+      clusters:
+      - '*'
+      kinds:
+      - '*'
   ha:
     enabled: false
     resources:
