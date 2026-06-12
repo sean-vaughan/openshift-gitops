@@ -91,10 +91,9 @@ account needs `get`/`list`/`watch` on that one secret — see
 
 ## Delivery
 
-Deployed through `delivery/argo-cd/overlays/cert-manager` (ADR-0011), which
-adds the `olm-csv-cleanup` PreSync hook and marks the ClusterIssuers
-`SkipDryRunOnMissingResource` so a fresh cluster can sync before the CRDs
-exist.
+Deployed directly from this source (default ApplicationSet path). The
+ClusterIssuers carry `SkipDryRunOnMissingResource` so a fresh cluster can
+sync before the operator has installed the CRDs.
 
 ## ACME account notes
 

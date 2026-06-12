@@ -1,12 +1,15 @@
 # Let's Encrypt staging — untrusted chain, but generous rate limits.
 # Use for testing issuance plumbing before pointing a Certificate at
-# letsencrypt-prod. HTTP-01 only: the hostname must resolve to this
-# cluster's ingress and port 80 must be reachable from the internet.
-# Wildcard certificates cannot be issued via HTTP-01 (DNS-01 required).
+# letsencrypt-prod. Same solver order as prod: DNS-01 via Route 53 for
+# vaughan.cc names, HTTP-01 fallback for anything else.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: letsencrypt-staging
+  annotations:
+    # ClusterIssuer CRD does not exist on a fresh cluster until the
+    # operator in this same source has installed.
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
