@@ -1,0 +1,5 @@
+# Cluster overlay used because sealed-google-client-secret.yaml is sealed
+# against this cluster's key (per-cluster secret, same as cluster-monitoring).
+spec:
+  source:
+    path: clusters/k8s-sno/openshift-authentication

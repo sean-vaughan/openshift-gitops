@@ -81,6 +81,7 @@ spec:
     policy: |
       g, system:cluster-admins, role:admin
       g, cluster-admins, role:admin
+      g, platform-admins, role:admin
       p, role:admin, exec, create, */*, allow
     scopes: '[groups]'
   repo:
