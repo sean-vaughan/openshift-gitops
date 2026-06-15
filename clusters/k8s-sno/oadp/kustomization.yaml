@@ -1,0 +1,8 @@
+resources:
+  - ../../../sources/oadp
+  - cloud-credentials-sealed.yaml
+  - data-protection-application.yaml
+  - schedule-fred-vaughan-cc.yaml
+  - schedule-mountainheart-net.yaml
+
+namespace: openshift-adp

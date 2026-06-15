@@ -1,0 +1,62 @@
+# Alertmanager routing configuration for the platform monitoring stack.
+#
+# CMO requires this to be delivered as the alertmanager-main Secret, but it
+# contains NO credentials: the SMTP password is referenced by file path and
+# delivered separately as the cluster-sealed alertmanager-smtp secret
+# (smtp_auth_password_file + alertmanagerMain.secrets mount). Committing this
+# Secret in plaintext is therefore intentional and review-friendly.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-main
+  namespace: openshift-monitoring
+type: Opaque
+stringData:
+  alertmanager.yaml: |
+    global:
+      http_config:
+        proxy_from_environment: true
+      smtp_smarthost: smtp.gmail.com:587
+      smtp_from: sean+alertmanager@vaughan.cc
+      smtp_auth_username: sean@vaughan.cc
+      smtp_auth_password_file: /etc/alertmanager/secrets/alertmanager-smtp/password
+      smtp_require_tls: true
+    inhibit_rules:
+      - equal:
+          - namespace
+          - alertname
+        source_matchers:
+          - severity = critical
+        target_matchers:
+          - severity =~ warning|info
+      - equal:
+          - namespace
+          - alertname
+        source_matchers:
+          - severity = warning
+        target_matchers:
+          - severity = info
+    receivers:
+      - name: Default
+        email_configs:
+          - to: sean@vaughan.cc
+            send_resolved: true
+      - name: Watchdog
+      - name: Critical
+        email_configs:
+          - to: sean@vaughan.cc
+            send_resolved: true
+    route:
+      group_by:
+        - namespace
+      group_interval: 5m
+      group_wait: 30s
+      receiver: Default
+      repeat_interval: 12h
+      routes:
+        - matchers:
+            - alertname = Watchdog
+          receiver: Watchdog
+        - matchers:
+            - severity = critical
+          receiver: Critical

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+    alertmanagerMain:
+      # Mounts each listed secret into the Alertmanager pods at
+      # /etc/alertmanager/secrets/<name>/. alertmanager-smtp carries the
+      # SMTP auth password referenced by alertmanager-main via
+      # smtp_auth_password_file, keeping credentials out of the config.
+      secrets:
+        - alertmanager-smtp

@@ -1,0 +1,18 @@
+# Let's Encrypt certificate for the public host. HTTP-01 validation can
+# only succeed once mountainheart.net DNS points at this cluster's ingress;
+# until then the Certificate stays Pending and cert-manager keeps retrying.
+# At DNS cutover it issues automatically.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mountainheart-net-tls
+  namespace: mountainheart-net
+  labels:
+    app: httpd
+spec:
+  secretName: mountainheart-net-tls
+  dnsNames:
+    - mountainheart.net
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod

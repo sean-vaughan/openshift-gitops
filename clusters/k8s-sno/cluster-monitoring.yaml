@@ -1,0 +1,6 @@
+# Per-cluster overlay (ADR-0012): sources/cluster-monitoring + the
+# cluster-sealed alertmanager-smtp secret (Gmail App Password for
+# email alert notifications).
+spec:
+  source:
+    path: clusters/k8s-sno/cluster-monitoring

@@ -1,0 +1,29 @@
+apiVersion: oadp.openshift.io/v1alpha1
+kind: DataProtectionApplication
+metadata:
+  name: dpa
+  namespace: openshift-adp
+spec:
+  configuration:
+    nodeAgent:
+      enable: true
+      uploaderType: kopia
+    velero:
+      defaultPlugins:
+        - openshift
+        - aws
+        - csi
+      defaultVolumesToFSBackup: true
+  backupLocations:
+    - velero:
+        provider: aws
+        default: true
+        objectStorage:
+          bucket: vaughan-k8s-sno-oadp
+          prefix: k8s-sno
+        config:
+          region: us-west-2
+          profile: default
+        credential:
+          name: cloud-credentials
+          key: cloud

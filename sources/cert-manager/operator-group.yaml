@@ -1,0 +1,9 @@
+# No targetNamespaces: the cert-manager operator installs in AllNamespaces
+# mode and watches the whole cluster.
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: cert-manager-operator
+  namespace: cert-manager-operator
+spec:
+  upgradeStrategy: Default

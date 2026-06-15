@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openshift-monitoring
+
+resources:
+  - ../../../sources/cluster-monitoring
+  # SMTP auth password, sealed against this cluster's sealed-secrets key
+  # (per-cluster by nature — see ADR-0012).
+  - sealed-smtp-secret.yaml

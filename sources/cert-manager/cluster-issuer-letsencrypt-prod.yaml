@@ -1,0 +1,40 @@
+# Let's Encrypt production — trusted certificates, strict rate limits
+# (5 duplicate certs/week, 5 failed validations/hour per hostname).
+# vaughan.cc names use DNS-01 via Route 53 (supports wildcards); anything
+# else falls back to HTTP-01, which requires the hostname to resolve to
+# this cluster's ingress with port 80 reachable from the internet.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  annotations:
+    # ClusterIssuer CRD does not exist on a fresh cluster until the
+    # operator in this same source has installed.
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: sean@vaughan.cc
+    privateKeySecretRef:
+      name: acme-private-key-prod
+    solvers:
+      # DNS-01 via Route 53 for wildcard certificates (*.apps.*, etc.).
+      # Credentials live in secret/route53-credentials in the cert-manager
+      # namespace (SealedSecret — see README for sealing instructions).
+      # hostedZoneID scopes challenges to the vaughan.cc zone only.
+      - dns01:
+          route53:
+            region: us-east-1
+            hostedZoneID: Z1Q0M4HUG3NMMI
+            accessKeyIDSecretRef:
+              name: route53-credentials
+              key: accessKeyID
+            secretAccessKeySecretRef:
+              name: route53-credentials
+              key: secretAccessKey
+        selector:
+          dnsZones:
+            - vaughan.cc
+      - http01:
+          ingress:
+            ingressClassName: openshift-default

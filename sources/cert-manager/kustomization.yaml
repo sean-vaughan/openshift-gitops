@@ -1,0 +1,6 @@
+resources:
+  - namespace.yaml
+  - operator-group.yaml
+  - subscription.yaml
+  - cluster-issuer-letsencrypt-prod.yaml
+  - sealed-route53-credentials.yaml
