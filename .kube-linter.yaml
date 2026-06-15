@@ -29,4 +29,12 @@ checks:
     # that fires on Go template expressions
     - "object-recommended-labels"
 
+    # sorted-keys is cosmetic (alphabetical key ordering) — not a correctness
+    # or security concern; Kubernetes and Argo CD are order-agnostic
+    - "sorted-keys"
+
+    # Argo CD application-controller requires cluster-admin to reconcile
+    # resources across all namespaces — this binding is intentional
+    - "cluster-admin-role-binding"
+
   customChecks: []

@@ -194,7 +194,7 @@ check_no_starting_csv() {
   local violations=0
   while IFS= read -r -d '' sub_file; do
     local rel="${sub_file#"$REPO_ROOT/"}"
-    if grep -q "startingCSV" "$sub_file" 2>/dev/null; then
+    if grep -qE "^\s*startingCSV:" "$sub_file" 2>/dev/null; then
       fail "$rel: contains 'startingCSV' (ADR-0003: pin via gate file override, not sources/)"
       ((violations++)) || true
     fi

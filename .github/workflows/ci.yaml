@@ -105,12 +105,15 @@ jobs:
         # files (not standalone manifests).
         # Skip files containing Go template expressions (Helm/ApplicationSet
         # templates) — kubeconform cannot parse them.
+        # Pre-filter to files that have a "kind:" key — Helm values override
+        # files (e.g. platform.yaml) are not Kubernetes manifests.
         run: |
           find sources/ -name "*.yaml" \
             ! -path "*/templates/*" \
             ! -name "kustomization.yaml" \
             ! -name "Chart.yaml" \
             ! -name "values.yaml" \
+            | xargs grep -l "^kind:" \
             | xargs -r kubeconform \
               -strict \
               -ignore-missing-schemas \
@@ -212,13 +215,13 @@ jobs:
         run: |
           EXIT=0
           TMPDIR=$(mktemp -d)
+          export TMPDIR
           # Extract all fenced mermaid blocks from Markdown files
           python3 - <<'PYEOF'
           import re, pathlib, sys, os
 
           tmpdir = os.environ.get('TMPDIR', '/tmp')
           pattern = re.compile(r'```mermaid\n(.*?)```', re.DOTALL)
-          errors = 0
 
           for md_file in pathlib.Path('docs').rglob('*.md'):
               text = md_file.read_text()
@@ -228,10 +231,9 @@ jobs:
 
           PYEOF
 
+          shopt -s nullglob
           for mmd_file in "$TMPDIR"/*.mmd; do
             echo "--- validating $mmd_file"
             mmdc --input "$mmd_file" --output /dev/null 2>&1 || { echo "FAIL: $mmd_file"; EXIT=1; }
           done
           exit $EXIT
-        env:
-          TMPDIR: /tmp/mermaid-validate
