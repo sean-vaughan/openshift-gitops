@@ -1,0 +1,8 @@
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: platform-admins
+users:
+  # Username is the Google email address (preferred_username claim, mappingMethod: claim).
+  # Add members here after their first Google OAuth login creates their OpenShift identity.
+  - sean@vaughan.cc

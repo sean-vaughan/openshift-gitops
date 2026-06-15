@@ -1,0 +1,20 @@
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+    - name: vaughan-gsuite
+      # lookup: user identity must be pre-provisioned; anonymous Google accounts cannot
+      # self-register. Add users via `oc create user` + `oc create identity` before
+      # they attempt to log in, or via the platform-admins-group.yaml Group membership.
+      mappingMethod: lookup
+      type: Google
+      google:
+        # Public client ID — safe to commit.
+        # Redirect URI: https://oauth-openshift.apps.k8s-sno.vaughan.cc/oauth2callback/vaughan-gsuite
+        clientID: 824186289747-su7l7auafk2677erah7c2jc1ocb973ie.apps.googleusercontent.com
+        clientSecret:
+          name: google-oauth-client-secret
+        # No hostedDomain restriction — any Google account can authenticate,
+        # but access is gated by pre-provisioned OpenShift user identities.
