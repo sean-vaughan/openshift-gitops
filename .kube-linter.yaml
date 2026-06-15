@@ -45,4 +45,15 @@ checks:
     - "privileged-ports"
     - "dnsconfig-options"
 
+    # Argo CD PreSync hook Jobs (e.g. olm-csv-cleanup) are single-run batch
+    # workloads: liveness/readiness probes are inapplicable. ose-cli:latest
+    # intentionally tracks the OCP stream. Platform infrastructure hooks are
+    # owned by the GitOps system, not a named team, so email/owner labels add
+    # no operational value.
+    - "no-liveness-probe"
+    - "no-readiness-probe"
+    - "latest-tag"
+    - "required-annotation-email"
+    - "required-label-owner"
+
   customChecks: []
