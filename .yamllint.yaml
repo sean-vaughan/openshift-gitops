@@ -36,3 +36,4 @@ ignore: |
   vendor/
   node_modules/
   docs/presentations/
+  sources/sealed-secrets/sealed-secrets/

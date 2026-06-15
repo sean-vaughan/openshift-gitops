@@ -8,7 +8,6 @@ roleRef:
   kind: ClusterRole
   name: system:openshift:scc:anyuid
 subjects:
-- kind: ServiceAccount
-  name: sealed-secrets
-  namespace: sealed-secrets
-
+  - kind: ServiceAccount
+    name: sealed-secrets
+    namespace: sealed-secrets

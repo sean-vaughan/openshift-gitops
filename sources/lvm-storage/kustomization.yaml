@@ -1,4 +1,3 @@
-
 resources:
-- subscription.yaml
-- operator-group.yaml
+  - subscription.yaml
+  - operator-group.yaml

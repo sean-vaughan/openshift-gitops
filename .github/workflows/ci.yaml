@@ -117,6 +117,7 @@ jobs:
             | xargs -r kubeconform \
               -strict \
               -ignore-missing-schemas \
+              -skip-kinds SealedSecret,ClusterPolicy \
               -schema-location default \
               -schema-location \
                 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \

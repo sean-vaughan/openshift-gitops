@@ -1,17 +1,17 @@
 apiVersion: agent-install.openshift.io/v1beta1
 kind: AgentServiceConfig
 metadata:
- name: agent
+  name: agent
 spec:
   databaseStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     resources:
       requests:
         storage: 10Gi
   filesystemStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     resources:
       requests:
         storage: 100Gi
@@ -21,7 +21,7 @@ spec:
   #   - <unauthenticated_registry>
   imageStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     resources:
       requests:
         storage: 50Gi

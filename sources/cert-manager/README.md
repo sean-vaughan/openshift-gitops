@@ -8,7 +8,7 @@ a `letsencrypt-prod` ClusterIssuer with two solvers, tried in order:
 | DNS-01 via Route 53 | `dnsZones: [vaughan.cc]` | Wildcard certs (`*.apps.*`, etc.) |
 | HTTP-01 | all other names | Single-hostname certs where port 80 is reachable |
 
-### Route 53 credentials
+## Route 53 credentials
 
 The DNS-01 solver reads AWS credentials from `secret/route53-credentials` in
 the `cert-manager` namespace. This secret is managed as a `SealedSecret`
