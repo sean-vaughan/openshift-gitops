@@ -1,0 +1,12 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: mountainheart-net-daily
+  namespace: openshift-adp
+spec:
+  schedule: "0 3 * * *"
+  template:
+    includedNamespaces:
+      - mountainheart-net
+    storageLocation: default
+    ttl: 168h0m0s
