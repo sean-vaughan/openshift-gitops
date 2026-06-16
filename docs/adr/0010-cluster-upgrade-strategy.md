@@ -100,6 +100,7 @@ Bumping from one minor version to the next (e.g., 4.20 → 4.21) requires:
 2. **Admin acknowledgement** — add an `AdminAcknowledgement` manifest to
    `sources/cluster-version/`. This is a one-time object per minor-version
    boundary:
+
    ```yaml
    apiVersion: operator.openshift.io/v1
    kind: AdminAcknowledgement
@@ -111,6 +112,7 @@ Bumping from one minor version to the next (e.g., 4.20 → 4.21) requires:
        - type: "AdminAckRequired"
          version: "4.20"
    ```
+
 3. **Update `spec.channel`** in the base (for dev) or gate file (for prod) in
    the same PR or a follow-on PR.
 
