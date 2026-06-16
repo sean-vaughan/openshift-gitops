@@ -1,0 +1,19 @@
+# Sparse Search CR: the MCH operator creates and owns this object (deployments,
+# tolerations, dbStorage.size defaults). Git declares only the one field we
+# intentionally deviate on — search-postgres must use a PVC instead of emptyDir,
+# whose corruption previously caused extended crash loops.
+#
+# ServerSideApply: Argo CD takes field ownership of dbStorage.storageClassName
+# only, instead of fighting the operator over the rest of spec.
+# SkipDryRunOnMissingResource: on a fresh cluster the Search CRD does not exist
+# until the MCH-installed search operator registers it; sync retries converge.
+apiVersion: search.open-cluster-management.io/v1alpha1
+kind: Search
+metadata:
+  name: search-v2-operator
+  namespace: open-cluster-management
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true,SkipDryRunOnMissingResource=true
+spec:
+  dbStorage:
+    storageClassName: lvms-vg1
