@@ -53,7 +53,10 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           config: .markdownlint.yaml
-          globs: "**/*.md"
+          globs: |
+            **/*.md
+            !docs/presentations/**
+            !sources/sealed-secrets/sealed-secrets/**
 
   # --------------------------------------------------------------------------
   # 3. Shell lint
@@ -117,7 +120,7 @@ jobs:
             | xargs -r kubeconform \
               -strict \
               -ignore-missing-schemas \
-              -skip-kinds SealedSecret,ClusterPolicy \
+              -ignore-filename-pattern "sealed-sealing-key-secret|cluster-policy" \
               -schema-location default \
               -schema-location \
                 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \

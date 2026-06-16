@@ -37,3 +37,4 @@ ignore: |
   node_modules/
   docs/presentations/
   sources/sealed-secrets/sealed-secrets/
+  sources/*/templates/
