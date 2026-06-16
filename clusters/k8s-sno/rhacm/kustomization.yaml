@@ -1,0 +1,8 @@
+# Per-cluster overlay (ADR-0012): org-default rhacm source plus the
+# cluster-specific Search dbStorage deviation (lvms-vg1 only exists here).
+# No namespace transformer — sources/rhacm mixes cluster-scoped resources
+# (Provisioning, AgentServiceConfig) with namespaced ones that already carry
+# explicit namespaces.
+resources:
+  - search.yaml
+  - ../../../sources/rhacm
