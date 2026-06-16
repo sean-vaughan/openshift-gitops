@@ -13,6 +13,7 @@ registry. A name that is too verbose is painful in Application names and `kubect
 output.
 
 Cluster names must also be:
+
 - DNS-compatible (RFC 1123): lowercase, alphanumeric, hyphens only, ≤ 63 characters
 - Stable: renaming a cluster requires renaming every Application, gate file, and
   ManagedCluster object that references it
@@ -34,6 +35,7 @@ All cluster names follow the pattern:
 | `n` | Sequence number within the DC+type+env tuple | `1`, `2`, `3` |
 
 Examples:
+
 - `rdu-sno-dev-1` — first dev Single Node OpenShift cluster in the Raleigh DC
 - `chi-mgmt-prd-1` — first prod management cluster in Chicago
 - `use1-hub-prd-1` — first prod hub cluster in AWS us-east-1

@@ -1,3 +1,6 @@
+# Required — override per deployment (no org default)
+location: placeholder
+sshAuthorizedKey: placeholder
 
 # location: dc-1
 # sshAuthorizedKey: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrEudq1QxMmgPadqO4cpTc4FV3OR5G1YdTB8qyniboD fwilliams@FWILLIAMS'

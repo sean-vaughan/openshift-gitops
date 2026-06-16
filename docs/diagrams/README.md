@@ -38,6 +38,7 @@ engine, managed clusters are the output.
 indicate the Kubernetes resource kind or architectural role.
 
 **Zoom levels** follow the spatial metaphor established by the PDF diagrams:
+
 - Clusters are depicted as 3D boxes (described in text, approximated with subgraphs)
 - Left → right: source of truth → engine → destination
 - Top → bottom: hub/management → platform → app-team

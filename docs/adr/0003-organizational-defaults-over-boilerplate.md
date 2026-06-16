@@ -13,6 +13,7 @@ structurally identical YAML that is hard to keep consistent and expensive to cha
 org-wide (e.g., adding a new sync option, tightening an RBAC policy).
 
 Two common failure modes:
+
 1. **Copy-paste boilerplate**: Teams copy a working example and modify it. Drift
    accumulates. Org-wide changes require mass edits.
 2. **Over-specified overrides**: Teams specify everything explicitly to be safe,

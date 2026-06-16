@@ -15,4 +15,4 @@ data:
        location = "registry.redhat.io/multicluster-engine"
        mirror-by-digest-only = true
        [[registry.mirror]]
-       location = "mirror.registry.com:5000/multicluster-engine" # Replace with your mirror registry
+       location = "mirror.registry.com:5000/multicluster-engine"  # Replace with your mirror registry

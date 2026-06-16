@@ -29,6 +29,18 @@ checks:
     # that fires on Go template expressions
     - "object-recommended-labels"
 
+    # sorted-keys is cosmetic (alphabetical key ordering) — not a correctness
+    # or security concern; Kubernetes and Argo CD are order-agnostic
+    - "sorted-keys"
+
+    # Argo CD application-controller requires cluster-admin to reconcile
+    # resources across all namespaces — this binding is intentional
+    - "cluster-admin-role-binding"
+
+    # cert-manager router-cert-reader role grants read access to the ingress
+    # TLS secret for automated certificate rotation — this is intentional
+    - "access-to-secrets"
+
     # Stateful single-replica workloads (e.g. sources/fred-vaughan-cc) use
     # RWO PVCs: Recreate strategy and one replica are structural, not bugs.
     # Lab clusters are single-node, so node affinity is meaningless.

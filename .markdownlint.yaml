@@ -1,0 +1,33 @@
+---
+# markdownlint configuration for openshift-gitops
+# https://github.com/DavidAnson/markdownlint#rules--aliases
+
+# Start with all rules enabled, then tune for this repo's conventions
+default: true
+
+# ADRs and READMEs use long lines — do not enforce line length
+MD013: false
+
+# Heading style — use ATX (# Heading) consistently
+MD003:
+  style: atx
+
+# Allow inline HTML in Mermaid code blocks and diagrams README
+MD033: false
+
+# Allow bare URLs in ADRs (they appear in Related sections)
+MD034: false
+
+# Allow duplicate headings across files (ADR index has repeated section names)
+MD024:
+  siblings_only: true
+
+# Ordered list style — allow any numbering (1. 1. 1. or 1. 2. 3.)
+MD029:
+  style: ordered
+
+# Code block language tags are encouraged but not required
+MD040: false
+
+# First heading in file may differ from filename — ADRs have numbered filenames
+MD041: false

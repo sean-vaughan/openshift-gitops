@@ -1,0 +1,6 @@
+# Marp presentation decks use slide-separator syntax that conflicts with
+# standard markdown formatting rules (MD036 emphasis-as-heading, MD032, etc.)
+docs/presentations/**
+
+# Vendored Helm chart content — not maintained in this repo
+sources/sealed-secrets/sealed-secrets/**

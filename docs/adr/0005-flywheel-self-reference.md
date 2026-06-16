@@ -54,9 +54,11 @@ ApplicationSet manifest itself.
   `ignoreApplicationDifferences`, or template defaults are applied automatically.
 - **Bootstrapping seam**: The ApplicationSet must be applied manually once
   (via `kubectl apply` or Ansible) before it can manage itself.
+
   ```
   kubectl apply -k clusters/<clusterName>/app-of-apps/
   ```
+
   After this, Argo CD takes over and the ApplicationSet manages itself.
 
 #### 2. Cluster secret deployed by the app it enables
@@ -83,11 +85,13 @@ projects will fail validation.
   a project is a pull request, not a manual operation.
 - **Bootstrapping seam**: Apply the `app-projects` source out-of-band before or
   immediately after bootstrapping the ApplicationSet.
+
   ```
   helm template sources/app-projects/chart \
     -f sources/app-projects/platform.yaml \
     | kubectl apply -f -
   ```
+
   Alternatively, temporarily assign new Applications to the `default` AppProject
   until `app-projects` has synced, then update. The `default` project exists in
   every Argo CD installation.
@@ -123,7 +127,7 @@ projects will fail validation.
 - The bootstrapping sequence matters. Applying resources in the wrong order produces
   transient errors. The documented bootstrap order is:
   1. `kubectl apply -k clusters/<clusterName>/app-of-apps/` (delivers ApplicationSet
-     + cluster secret in one step).
+     and cluster secret in one step).
   2. Wait for `app-of-apps` Application to sync and reach Healthy state.
   3. `app-projects` Application syncs automatically; AppProjects are created.
   4. All other Applications sync in dependency order (Argo CD sync waves if needed).

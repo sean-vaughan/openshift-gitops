@@ -63,7 +63,7 @@ spec:
     provider: dex
   applicationSet:
     extraCommandArgs:
-    - '--enable-new-git-file-globbing'
+      - '--enable-new-git-file-globbing'
     resources:
       limits:
         cpu: '2'

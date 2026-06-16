@@ -1,27 +1,27 @@
 apiVersion: agent-install.openshift.io/v1beta1
 kind: AgentServiceConfig
 metadata:
- name: agent
+  name: agent
 spec:
   databaseStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     resources:
       requests:
         storage: 10Gi
   filesystemStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     resources:
       requests:
         storage: 100Gi
   # mirrorRegistryRef:
-  #   name: <mirror_config> 
+  #   name: <mirror_config>
   # unauthenticatedRegistries:
-  #   - <unauthenticated_registry> 
+  #   - <unauthenticated_registry>
   imageStorage:
     accessModes:
-    - ReadWriteOnce
+      - ReadWriteOnce
     resources:
       requests:
         storage: 50Gi
@@ -30,7 +30,7 @@ spec:
   # OSImageCACertRef:
   #   name: image-service-additional-ca
   # osImages:
-  #   - openshiftVersion: "<ocp_version>" 
-  #     version: "<ocp_release_version>" 
-  #     url: "<iso_url>" 
+  #   - openshiftVersion: "<ocp_version>"
+  #     version: "<ocp_release_version>"
+  #     url: "<iso_url>"
   #     cpuArchitecture: "x86_64"

@@ -23,7 +23,7 @@ Two failure modes are eliminated by mechanical enforcement rather than disciplin
 
 A third failure mode is addressed by policy rather than mechanics:
 
-3. **Emergency bypass** — a genuine break-glass situation requires a fast path.
+1. **Emergency bypass** — a genuine break-glass situation requires a fast path.
    The rule must accommodate this without undermining normal governance.
 
 ---
