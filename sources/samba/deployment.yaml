@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samba
+  namespace: samba
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: samba
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: samba
+    spec:
+      serviceAccountName: samba
+      containers:
+        - name: samba
+          image: ghcr.io/servercontainers/samba:latest
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 445
+              hostPort: 445
+              protocol: TCP
+          env:
+            # Advertise as a TimeCapsule so macOS Time Machine recognises the share
+            - name: MODEL
+              value: TimeCapsule
+            # Disable Avahi/mDNS — mDNS doesn't cross the k8s network boundary;
+            # the Mac connects by node IP directly.
+            - name: AVAHI_DISABLE
+              value: "1"
+            - name: WSDD2_DISABLE
+              value: "1"
+            - name: ACCOUNT_timemachine
+              valueFrom:
+                secretKeyRef:
+                  name: samba-credentials
+                  key: password
+            - name: UID_timemachine
+              value: "1000"
+            # Share config: semicolons are treated as line separators by this image.
+            # fruit:time machine max size matches the PVC size so Time Machine
+            # reports accurate remaining-space figures to macOS.
+            - name: SAMBA_VOLUME_CONFIG_timemachine
+              value: >-
+                [timemachine];
+                path = /shares/timemachine;
+                valid users = timemachine;
+                browseable = yes;
+                writable = yes;
+                vfs objects = catia fruit streams_xattr;
+                fruit:time machine = yes;
+                fruit:time machine max size = 1T;
+                durable handles = yes;
+                kernel oplocks = no;
+                kernel share modes = no;
+                posix locking = no
+          volumeMounts:
+            - name: timemachine-data
+              mountPath: /shares/timemachine
+      volumes:
+        - name: timemachine-data
+          persistentVolumeClaim:
+            claimName: samba-timemachine

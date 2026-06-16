@@ -1,0 +1,3 @@
+resources:
+  - ../../../sources/samba
+  - samba-credentials-sealed.yaml
