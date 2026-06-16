@@ -1,0 +1,6 @@
+resources:
+  - namespace.yaml
+  - service-account.yaml
+  - scc-binding.yaml
+  - pvc.yaml
+  - deployment.yaml
