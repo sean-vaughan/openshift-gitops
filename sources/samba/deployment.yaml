@@ -16,6 +16,11 @@ spec:
         app: samba
     spec:
       serviceAccountName: samba
+      # OVN-Kubernetes (OpenShift's default CNI) does not implement hostPort
+      # port-mapping, so hostNetwork is required to bind 445 on the node
+      # directly. This is fine for a single-node lab cluster.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: samba
           image: ghcr.io/servercontainers/samba:latest
@@ -23,7 +28,6 @@ spec:
             privileged: true
           ports:
             - containerPort: 445
-              hostPort: 445
               protocol: TCP
           env:
             # Advertise as a TimeCapsule so macOS Time Machine recognises the share
