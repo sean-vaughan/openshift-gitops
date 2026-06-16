@@ -21,6 +21,19 @@ spec:
       # directly. This is fine for a single-node lab cluster.
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        # The servercontainers/samba image attempts chown via a dot-notation
+        # user.group syntax that fails silently, leaving /shares/timemachine
+        # owned by root and inaccessible to the samba user (UID 1000).
+        # This initContainer fixes ownership before smbd starts.
+        - name: fix-perms
+          image: busybox:latest
+          securityContext:
+            privileged: true
+          command: ["sh", "-c", "chown -R 1000:1000 /shares/timemachine && chmod 700 /shares/timemachine"]
+          volumeMounts:
+            - name: timemachine-data
+              mountPath: /shares/timemachine
       containers:
         - name: samba
           image: ghcr.io/servercontainers/samba:latest
