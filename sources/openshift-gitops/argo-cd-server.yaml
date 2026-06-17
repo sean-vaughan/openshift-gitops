@@ -101,11 +101,21 @@ spec:
       - TaskRun
       - PipelineRun
     # clusterview.open-cluster-management.io is an aggregated API served by MCE's
-    # ocm-proxyserver, exposing read-only projected views (never deployed from this
-    # repo). Its OpenAPI schema intermittently drops the UserPermissionStatus model
-    # referenced by UserPermission.status; when that happens Argo's cluster cache
-    # can't build against the broken schema, comparison fails, and every app goes to
-    # sync Unknown. Excluding the group keeps the proxy API out of the cache entirely.
+    # ocm-proxyserver (multicluster-engine/ocm-proxyserver). It exposes read-only
+    # projected cluster views that are never deployed from this repo. Excluding it
+    # prevents Argo from tracking or pruning those resources.
+    #
+    # NOTE: resource.exclusions does NOT prevent Argo from loading the aggregated
+    # /openapi/v2 schema — that global fetch happens before any exclusion filtering.
+    # MCE 2.11's cluster-lifecycle-api has a schema generation bug: the UserPermission
+    # .status $ref uses JSON Pointer ~1-encoded slashes (go package path with ~1 for /)
+    # but the definitions map keys use literal slashes. Argo CD v3's kube-openapi
+    # does exact-string ref lookup without ~1 unescaping → SchemaError on parse →
+    # entire cluster cache fails to initialize → all 17 apps go to sync Unknown.
+    # Workaround: MCE's server-foundation component is disabled in the MCE CR
+    # (oc patch multiclusterengine multiclusterengine) until a fixed MCE release is
+    # available. This exclusion is kept as defence-in-depth so if server-foundation
+    # is ever accidentally re-enabled the clusterview resources won't be tracked.
     - apiGroups:
       - clusterview.open-cluster-management.io
       clusters:
