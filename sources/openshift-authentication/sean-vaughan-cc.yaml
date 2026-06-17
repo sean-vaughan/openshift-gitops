@@ -1,0 +1,29 @@
+# Pre-provisioned login for sean@vaughan.cc via the vaughan-gsuite Google IdP.
+#
+# The OAuth provider uses mappingMethod: lookup (see oauth.yaml), so OpenShift will
+# NOT auto-create identities — a matching User + Identity must exist before login.
+#
+# The Identity name is "<providerName>:<Google sub>", where the Google subject ID is
+# the account's stable numeric identifier (NOT the email). These objects were
+# originally created imperatively (oc create user/identity) and harvested into this
+# manifest on 2026-06-17 to bring them under GitOps.
+#
+# user.uid below pins the mapping to this cluster's User object. If the User is ever
+# recreated (new uid), update this field to match.
+apiVersion: user.openshift.io/v1
+kind: User
+metadata:
+  name: sean@vaughan.cc
+fullName: Sean Vaughan
+identities:
+  - vaughan-gsuite:112896153305701750996
+---
+apiVersion: user.openshift.io/v1
+kind: Identity
+metadata:
+  name: vaughan-gsuite:112896153305701750996
+providerName: vaughan-gsuite
+providerUserName: "112896153305701750996"
+user:
+  name: sean@vaughan.cc
+  uid: 1680c01a-8356-4fd2-98a9-2ec1f32dce9d
