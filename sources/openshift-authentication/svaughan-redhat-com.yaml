@@ -1,0 +1,30 @@
+# Pre-provisioned login for svaughan@redhat.com via the vaughan-gsuite Google IdP.
+#
+# The OAuth provider uses mappingMethod: lookup (see oauth.yaml), so OpenShift will
+# NOT auto-create identities — a matching User + Identity must exist before login.
+#
+# The Identity name is "<providerName>:<Google sub>", where the Google subject ID is
+# the account's stable numeric identifier (NOT the email). It is only discoverable by
+# letting the account authenticate once. This sub was captured on 2026-06-17 by
+# temporarily switching the provider to mappingMethod: add (hostedDomain: redhat.com),
+# logging in once, then reverting to lookup.
+#
+# user.uid below pins the mapping to this cluster's User object. If the User is ever
+# recreated (new uid), update this field to match.
+apiVersion: user.openshift.io/v1
+kind: User
+metadata:
+  name: svaughan@redhat.com
+fullName: Sean Vaughan
+identities:
+  - vaughan-gsuite:111545724772326060295
+---
+apiVersion: user.openshift.io/v1
+kind: Identity
+metadata:
+  name: vaughan-gsuite:111545724772326060295
+providerName: vaughan-gsuite
+providerUserName: "111545724772326060295"
+user:
+  name: svaughan@redhat.com
+  uid: 17e600e1-abcb-4304-b822-a34a0f5a4c47
