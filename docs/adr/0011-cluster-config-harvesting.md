@@ -104,6 +104,46 @@ are auditable and tunable by PR. They start permissive-toward-skipping (false
 negatives — missing a custom object — are cheap to fix later; false positives
 that dump operator noise erode trust in the tool).
 
+### Confidence ranking: temporal signal (advisory, heuristic 6)
+
+The five filters above decide *whether* an object is a candidate. A sixth signal —
+**time** — does not gate; it **ranks and annotates** the survivors so a reviewer's
+attention goes to the most-likely-human config first. It is deliberately never an
+include/exclude filter, because the failure modes below are too noisy to gate on.
+
+Two temporal inputs, in order of strength:
+
+1. **Last human edit (`managedFields` time).** Each `managedFields` entry carries a
+   per-manager `time`. When a *human* field-manager (`kubectl`/`oc`/console) is
+   recorded as having touched `spec`/`data`, that timestamp is the most direct
+   evidence of human intent — and, unlike `creationTimestamp`, it survives operator
+   delete/recreate. This is high-precision but **low-recall**: a cluster built by
+   operators/Helm/GitOps often has no human edit-times at all (the Phase-0 run found
+   zero), so its *absence* means nothing.
+2. **Install cohort (`creationTimestamp − t0`).** Most platform/install objects are
+   created in a window around cluster bootstrap. An object born in that window is
+   *more likely* install baseline; one born well after is *more likely* config a
+   human added over the cluster's life. The reference epoch `t0` is anchored on
+   install **start** (earliest of ClusterVersion's first-history `startedTime` and
+   the `kube-system` namespace creationTimestamp) — **not** CVO completion, since
+   day-1 config (MachineConfigs, `config.openshift.io` CRs) is written *during*
+   bootstrap and would otherwise read as pre-install.
+
+These combine into an advisory confidence (`high`/`medium`/`low`) surfaced in the PR
+body, never written into the emitted manifest. Three properties keep it honest:
+
+- **It never excludes.** Day-1 *human* config (custom chrony/NTP, SSH MachineConfigs,
+  the cluster config singletons) lands in the install cohort too — gating on cohort
+  would discard exactly the config the harvest exists to capture. `low` means
+  "probably install baseline, look here last," not "drop."
+- **It does not resolve the operator-rendered-vs-authored ambiguity** (the class-(2)
+  noise this ADR already flags): MCO-rendered MachineConfigs appear both inside and
+  outside the cohort. Timestamps narrow attention; only a baseline diff separates
+  rendered from authored.
+- **`creationTimestamp` reflects API create time, not intent** — operators recreate
+  objects continuously (cert rotation, upgrades) — which is precisely why this is a
+  ranking signal feeding a human, not a filter.
+
 ### Normalization
 
 Each surviving object is **neated** before emission:
