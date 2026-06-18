@@ -68,4 +68,18 @@ checks:
     - "required-annotation-email"
     - "required-label-owner"
 
+    # sources/samba: intentional policy exceptions for a single-node lab SMB
+    # Time Machine share. OVN-Kubernetes does not implement hostPort mapping, so
+    # hostNetwork is required to bind port 445 directly on the node. The samba
+    # container and its fix-perms initContainer require privileged to chown the
+    # share and run smbd. Resource limits are omitted on a single-node lab where
+    # memory pressure is managed at the node level. restart-policy fires on a
+    # Deployment with Recreate strategy (no restartPolicy field needed there).
+    # These are human-acknowledged intentional exceptions per ADR-0012.
+    - "host-network"
+    - "privileged-container"
+    - "unset-cpu-requirements"
+    - "unset-memory-requirements"
+    - "restart-policy"
+
   customChecks: []

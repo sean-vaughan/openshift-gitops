@@ -27,6 +27,12 @@ structural changes to the repo.
 
 ### Repo Structure
 
+The layout is informed by the Red Hat Community of Practice reference,
+[redhat-cop/gitops-standards-repo-template](https://github.com/redhat-cop/gitops-standards-repo-template),
+and extends it with multi-tool delivery, ApplicationSet-driven app-of-apps,
+team/AppProject governance, and agentic flywheel capabilities. See ADR-0001 for
+the detailed comparison.
+
 - The top-level directory structure is strictly validated against OpenAPI/Swagger path
   schema conventions — no ad-hoc directories or file sprawl.
 - `clusters/` contains per-cluster gate files that control which apps run on which
