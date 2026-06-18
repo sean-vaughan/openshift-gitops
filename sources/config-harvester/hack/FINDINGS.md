@@ -84,6 +84,32 @@ Net: the signal earns its keep as a **reviewer-attention ranking** in the PR bod
 (sort `medium`/`high` to the top, label `low` as probable-install-baseline), not as
 a filter. Candidate count is unchanged (88) by design.
 
+## Curated named singletons (heuristic 4 extension) — added 2026-06-18
+
+Caught a gap: **`kube-system/cluster-config-v1`** — the installer's stored
+`install-config` (cluster identity/provenance) — was being *skipped*, because
+`kube-system` is a denied namespace and the object has no human field-manager.
+It is genuinely worth capturing.
+
+Fix: an always-include **named-singleton** allow-list keyed by `(namespace, name)`
+that bypasses the namespace deny and the managedFields gate (not the owner/Argo
+filters), mapping each entry to a repo-relative placement. Result: candidates 88 →
+89, annotated `[low] install-cohort` as expected.
+
+**Placement matters here:** this object must *not* be Argo-CD-reconciled (it records
+how the cluster was installed; nothing should drive it back), and it is
+cluster-specific. So it is placed **outside `sources/`**, under
+`clusters/<cluster>/cluster-config/` — verified emitting to
+`clusters/k8s-sno/cluster-config/`, with the cluster name derived from the
+install-config's `metadata.name` (overridable via `--cluster`). Normal captures
+continue to emit under `sources/<app>/`. A future cluster-install/bootstrap app may
+later adopt this provenance.
+
+Secret audit before adding it: `pullSecret` is installer-blanked, `sshKey` is a
+public key — safe. This surfaced a general caveat now in ADR-0011: a `ConfigMap`'s
+`data` can hold secrets the `Secret`-kind routing won't catch, so every curated named
+object must be secret-audited first.
+
 ## Conclusion → decision input for Phase 1+
 
 - **The core value is real.** A 2.1% signal ratio on a busy cluster, surfacing

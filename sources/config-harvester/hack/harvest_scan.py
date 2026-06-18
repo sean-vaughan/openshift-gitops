@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -56,6 +57,21 @@ CURATED_CLUSTER_KINDS = [
     "consolenotifications.console.openshift.io",
     "consoleyamlsamples.console.openshift.io",
 ]
+
+# Always-include named singletons that live in an otherwise-denied namespace and
+# carry no human field-manager, but are high-value config/provenance known by name.
+# These bypass the namespace deny-list and the managedFields gate (like the cluster
+# singletons in CURATED_CLUSTER_KINDS). The value is the repo-relative placement
+# template ({cluster} is substituted at emit). Note these are deliberately placed
+# OUTSIDE sources/ — they are captured provenance, NOT Argo-CD-reconciled apps.
+CURATED_NAMED_OBJECTS = {
+    # The installer's stored install-config: cluster identity/provenance
+    # (baseDomain, networking, platform, topology). pullSecret is installer-blanked;
+    # sshKey is a public key. Cluster-specific and NOT reconciled — it documents how
+    # the cluster was installed, so it lands per-cluster, not in a shared app. A
+    # future cluster-install/bootstrap app may later adopt it.
+    ("kube-system", "cluster-config-v1"): "clusters/{cluster}/cluster-config",
+}
 
 # Namespaced kinds worth scanning for human-applied config in allowed namespaces.
 CURATED_NAMESPACED_KINDS = [
@@ -206,6 +222,32 @@ def install_epoch() -> datetime | None:
     return min(candidates) if candidates else None
 
 
+def cluster_name(override: str | None = None, default: str = "unknown-cluster") -> str:
+    """The repo's name for this cluster, for per-cluster placement. Best-effort:
+    prefer an explicit override, else the install-config's metadata.name (the
+    install-time cluster name) from cluster-config-v1. The repo's canonical name is
+    the Argo/ManagedCluster name, which is not reliably derivable in-cluster — so the
+    production controller should be told its cluster name, not guess it."""
+    if override:
+        return override
+    cm = oc_json(["cm", "cluster-config-v1", "-n", "kube-system"])
+    if cm:
+        ic = cm.get("data", {}).get("install-config", "") or ""
+        in_meta = False
+        for line in ic.splitlines():
+            if re.match(r"^metadata:\s*$", line):
+                in_meta = True
+                continue
+            if in_meta:
+                if re.match(r"^\S", line):  # dedented out of the metadata block
+                    in_meta = False
+                    continue
+                m = re.match(r"\s+name:\s*(\S+)", line)
+                if m:
+                    return m.group(1)
+    return default
+
+
 def last_human_edit(obj: dict) -> datetime | None:
     """The most recent time a human field-manager touched spec/data, from
     managedFields. More directly tied to intent than creationTimestamp, and robust
@@ -317,7 +359,13 @@ def consider(obj: dict, kind: str, res: ScanResult, namespaced: bool,
         res.skip_detail.append((ref, "platform-propagated into every namespace"))
         return
 
-    if namespaced and is_system_ns(ns) and ns not in SYSTEM_NS_ALLOW:
+    # Curated named singletons are always-include: they bypass the namespace deny
+    # and the managedFields gate, like the cluster-scoped singletons. (owner/argo/
+    # propagated checks above still apply — a curated object that became owned or
+    # Argo-managed is correctly skipped.)
+    curated = (ns, name) in CURATED_NAMED_OBJECTS
+
+    if not curated and namespaced and is_system_ns(ns) and ns not in SYSTEM_NS_ALLOW:
         res.skipped["system namespace (denied)"] += 1
         res.skip_detail.append((ref, f"system namespace {ns} not in allow-list"))
         return
@@ -327,7 +375,7 @@ def consider(obj: dict, kind: str, res: ScanResult, namespaced: bool,
     # In an allow-listed SYSTEM namespace the bar is higher: a human manager must be
     # PROVEN, so inconclusive (server-created, no managedFields touching data) is
     # skipped. In a user namespace, inconclusive is given the benefit of the doubt.
-    if namespaced:
+    if namespaced and not curated:
         human = spec_manager_is_human(obj)
         if human is False:
             res.skipped["operator-owned fields"] += 1
@@ -351,7 +399,7 @@ def consider(obj: dict, kind: str, res: ScanResult, namespaced: bool,
     res.captured.append((ref, neat(obj), temporal_signal(obj, epoch)))
 
 
-def scan(emit: str | None, show_skips: bool) -> ScanResult:
+def scan(emit: str | None, show_skips: bool, cluster: str | None = None) -> ScanResult:
     res = ScanResult()
 
     epoch = install_epoch()
@@ -378,11 +426,19 @@ def scan(emit: str | None, show_skips: bool) -> ScanResult:
             consider(obj, kind, res, namespaced=True, epoch=epoch)
 
     if emit:
+        cname = cluster_name(cluster)
         for ref, obj, _ in res.captured:
             kind = obj.get("kind", "obj").lower()
             name = obj.get("metadata", {}).get("name", "x")
-            ns = obj.get("metadata", {}).get("namespace", "cluster")
-            d = os.path.join(emit, ns)
+            ns = obj.get("metadata", {}).get("namespace", "")
+            # Curated named objects use their repo-relative placement template
+            # (e.g. clusters/<cluster>/cluster-config — provenance, NOT Argo-managed).
+            # Everything else is an Argo source: sources/<app> (app = namespace, or
+            # "cluster" for cluster-scoped objects).
+            placement = CURATED_NAMED_OBJECTS.get((ns, name))
+            rel = (placement.format(cluster=cname) if placement
+                   else os.path.join("sources", ns or "cluster"))
+            d = os.path.join(emit, rel)
             os.makedirs(d, exist_ok=True)
             with open(os.path.join(d, f"{kind}-{name}.json"), "w") as f:
                 json.dump(obj, f, indent=2)
@@ -429,6 +485,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="config-harvester Phase 0 scanner")
     ap.add_argument("--emit", metavar="DIR", help="write neated manifests here")
     ap.add_argument("--show-skips", action="store_true", help="explain skips")
+    ap.add_argument("--cluster", metavar="NAME",
+                    help="repo cluster name for per-cluster placement "
+                         "(default: derived from install-config)")
     args = ap.parse_args()
 
     who = subprocess.run(["oc", "whoami"], capture_output=True, text=True)
@@ -437,7 +496,7 @@ def main() -> int:
         return 1
     print(f"scanning as {who.stdout.strip()} (read-only)\n")
 
-    res = scan(args.emit, args.show_skips)
+    res = scan(args.emit, args.show_skips, args.cluster)
     report(res, args.show_skips)
     if args.emit:
         print(f"\nneated manifests written to {args.emit}/")

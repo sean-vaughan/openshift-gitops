@@ -94,6 +94,24 @@ any running cluster, which is what the bootstrapping use case needs.
    (`Ingress`, `OAuth`, `Image`, `Scheduler`, `Network`, `APIServer`,
    `Proxy`, `Console`, ...), plus `MachineConfig`, `Tuned`, `ContainerRuntimeConfig`,
    `KubeletConfig`, and console customization CRs.
+   - **Named singletons in denied namespaces.** The same always-include logic
+     extends to specific high-value objects known by **(namespace, name)** that live
+     in an otherwise-denied namespace and carry no human field-manager — they bypass
+     both the namespace deny-list (filter 3) and the field-manager filter (filter 2),
+     but not the ownership/Argo filters. The canonical case is
+     **`kube-system/cluster-config-v1`**, the installer's stored `install-config`
+     (cluster identity/provenance: `baseDomain`, networking, platform, topology).
+     This object is **provenance, not reconciled config** — nothing controls it, and
+     it must **not** be driven by Argo CD — and it is **cluster-specific**. It is
+     therefore captured *outside* `sources/` entirely, under
+     **`clusters/<cluster-name>/cluster-config/`** (see Output placement), not as a
+     shared app. A future cluster-install / bootstrap app may adopt it; until then it
+     is a per-cluster captured record.
+   - **Embedded-secret caveat.** A `ConfigMap` can carry secret material in its
+     `data`, which the `Secret`-kind routing (constraint 5) does not catch. For
+     `cluster-config-v1` this is safe — the installer blanks `pullSecret` and the
+     `sshKey` is a public key — but any curated named object must be secret-audited
+     before it is added to the always-include set.
 5. **Already-managed exclusion** — skip anything Argo CD already manages
    (objects carrying the `app.kubernetes.io/instance` / Argo tracking label or
    annotation). The harvester's job is to find what is *not yet* in the flywheel.
@@ -158,9 +176,10 @@ Each surviving object is **neated** before emission:
 
 ### Output placement
 
-Captured objects land in the standard `sources/<app-name>/` layout (ADR-0001) —
-the harvester invents no new directory shapes. The `<app-name>` is derived, not
-chosen:
+Most captured objects land in the standard `sources/<app-name>/` layout (ADR-0001),
+because most captures are intended for Argo CD to reconcile. The `<app-name>` is
+derived, not chosen. The exception is captured **provenance that must not be
+Argo-reconciled** (below), which is placed per-cluster outside `sources/`:
 
 - **Namespaced resources** map to `sources/<app-name>/` where `<app-name>` is the
   resource's **OpenShift Project (namespace) name**. A namespace and its config
@@ -171,12 +190,19 @@ chosen:
   `ClusterVersion` → `sources/cluster-version/`). A small domain→app table in the
   harvester config handles these; unmapped cluster config falls to a review-only
   bucket rather than guessing.
-- **Update-or-create.** If `sources/<app-name>/` already exists, the harvest is an
-  **update** to that existing source — the object is merged in and its
-  `kustomization.yaml` extended, never a parallel app. A new `sources/<app-name>/`
-  is created only when no source for that Project/domain exists yet. This means
-  re-harvesting an already-managed app surfaces as a reviewable diff, not a
-  duplicate.
+- **Cluster-specific provenance** (the curated named singletons of heuristic 4,
+  e.g. `cluster-config-v1`) is **not** an Argo source. It is placed under
+  **`clusters/<cluster-name>/cluster-config/`**, deliberately outside `sources/` so
+  the app-of-apps ApplicationSet never turns it into a reconciled Application —
+  this config records how a specific cluster was *installed*; Argo CD must not drive
+  it. It is cluster-specific (the cluster name is part of the path) and is captured
+  for the record, not for reconciliation. If/when a cluster-install or bootstrap app
+  exists, that provenance may be adopted into it; until then this is its home.
+- **Update-or-create.** If the target directory already exists, the harvest is an
+  **update** to it — the object is merged in and any `kustomization.yaml` extended,
+  never a parallel app. A new directory is created only when none exists yet for that
+  Project/domain/cluster. This means re-harvesting already-captured config surfaces
+  as a reviewable diff, not a duplicate.
 
 `Secret` objects are never emitted raw. A captured `Secret` is either routed
 through `sources/sealed-secrets` (sealed before commit) or listed in the PR body
