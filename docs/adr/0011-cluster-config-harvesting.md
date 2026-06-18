@@ -88,7 +88,7 @@ any running cluster, which is what the bootstrapping use case needs.
    real cluster config legitimately lives (`openshift-config`,
    `openshift-config-managed`, `openshift-monitoring` user overrides, etc.).
    User-created namespaces pass by default.
-4. **Curated config GVK set** — always-include singleton, user-tunable
+4. **Curated config GVK (Group/Version/Kind) set** — always-include singleton, user-tunable
    cluster-config CRs regardless of namespace heuristics, because these are the
    highest-value config and are known by kind. The `config.openshift.io` group
    (`Ingress`, `OAuth`, `Image`, `Scheduler`, `Network`, `APIServer`,
@@ -116,7 +116,7 @@ any running cluster, which is what the bootstrapping use case needs.
    (objects carrying the `app.kubernetes.io/instance` / Argo tracking label or
    annotation). The harvester's job is to find what is *not yet* in the flywheel.
 
-The GVK set, namespace allow-list, and field-manager allow-list are configuration
+The GVK (Group/Version/Kind) set, namespace allow-list, and field-manager allow-list are configuration
 of the harvester itself, carried in `sources/config-harvester/` so the heuristics
 are auditable and tunable by PR. They start permissive-toward-skipping (false
 negatives — missing a custom object — are cheap to fix later; false positives
@@ -231,7 +231,7 @@ sources/config-harvester/
   kustomization.yaml
   cronjob.yaml              # scheduled harvest; also runnable ad-hoc
   rbac.yaml                 # ServiceAccount + cluster-scoped read-only ClusterRole
-  config.yaml              # ConfigMap: GVK set, namespace + manager allow-lists
+  config.yaml              # ConfigMap: GVK (Group/Version/Kind) set, namespace + manager allow-lists
   README.md
 ```
 
