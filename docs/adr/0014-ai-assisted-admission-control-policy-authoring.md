@@ -156,13 +156,18 @@ it, and requests human authorship of a new template.
 
 ```
 sources/
-  gatekeeper-policies/           # Argo CD source for all Gatekeeper resources
-    base/
+  gatekeeper-policies/           # Argo CD source — org-wide base constraints
+    kustomization.yaml
+    <policy-name>.yaml           # org-wide ConstraintTemplate + Constraint instances
+
+clusters/
+  <cluster-name>/
+    gatekeeper-policies.yaml     # gate file activating the app; templatePatch may
+                                 # set spec.source.path to the overlay below
+    gatekeeper-policies/         # per-cluster kustomize overlay (when needed)
       kustomization.yaml
-    overlays/
-      <cluster>/                 # per-cluster constraint instances
-        kustomization.yaml
-        <policy-name>.yaml       # Constraint (enforcementAction: dryrun|warn|deny)
+      <policy-name>.yaml         # cluster-specific Constraint additions or patches
+                                 # (enforcementAction: dryrun|warn|deny)
 
 schema/
   gatekeeper-templates/          # template library — human-authored, peer-reviewed
@@ -171,13 +176,19 @@ schema/
       parameters.md              # parameter schema and guidance
 ```
 
-The `sources/gatekeeper-policies/` directory is a standard Argo CD source managed
-by the app-of-apps (ADR-0001, ADR-0003). The template library under `schema/` is
-not directly deployed — it is the authoritative source from which `Constraint`
-instances in `sources/gatekeeper-policies/` are derived. Keeping the two directories
-separate enforces the distinction between *reusable rule definitions* (human-owned,
-peer-reviewed, in `schema/`) and *deployed constraint instances* (agent-authored,
-governance-gated, in `sources/`).
+`sources/gatekeeper-policies/` is the org-wide base: `ConstraintTemplate` resources
+and any `Constraint` instances that apply to every cluster. It is a standard Argo CD
+source managed by the app-of-apps (ADR-0001, ADR-0003). Per-cluster constraint
+instances and kustomize overlays live in `clusters/<cluster-name>/gatekeeper-policies/`,
+consistent with the repo's established pattern that all cluster-specific configuration
+belongs under `clusters/` (not inside `sources/`). A cluster's gate file
+(`clusters/<cluster-name>/gatekeeper-policies.yaml`) activates the app and, when a
+cluster overlay exists, uses `templatePatch` to point `spec.source.path` at that
+overlay directory. The template library under `schema/` is not directly deployed — it
+is the authoritative source from which constraint instances in both locations are
+derived. Keeping it separate enforces the distinction between *reusable rule
+definitions* (human-owned, peer-reviewed, in `schema/`) and *deployed constraint
+instances* (agent-authored, governance-gated, in `sources/` and `clusters/`).
 
 ### Enforcement promotion cadence
 
