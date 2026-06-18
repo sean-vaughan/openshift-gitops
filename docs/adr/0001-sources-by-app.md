@@ -64,3 +64,14 @@ mechanism. Other tools consume the same path.
 
 - `CLAUDE.md` — Source Delivery section
 - ADR-0002 (planned): Application naming convention
+- [redhat-cop/gitops-standards-repo-template](https://github.com/redhat-cop/gitops-standards-repo-template)
+  — the Red Hat Community of Practice reference layout that informed the initial
+  structure of this repo. Key differences: the CoP template uses `components/`,
+  `groups/`, `clusters/` (vs. this repo's `sources/`, `profiles/`, `clusters/`);
+  it is Kustomize-only at the top level (Helm is accessible only via
+  Kustomize's HelmChartInflaterGenerator); and it generates Argo CD Applications
+  via a Helm chart rather than an ApplicationSet. This repo extends the CoP
+  baseline with multi-tool delivery (plain manifests, Kustomize, and Helm each
+  as first-class `sources/<app>` formats), ApplicationSet-driven app-of-apps,
+  team/AppProject governance, environment-promotion lanes, and agentic flywheel
+  capabilities (ADR-0011, ADR-0012).
