@@ -1,0 +1,5 @@
+{
+  "_comment": "Shared inference core for OpenShift Genesis — the ONE endpoint every agent surface calls (harvester PR-authoring now; OOD/novelty pre-gate and outcome-grader next, per ADR-0017). base_url is the OpenAI-compatible /v1 root, so the backend is swappable by CONFIG ALONE. Phase A: Ollama + qwen2.5:14b on the Bazzite box (192.168.4.45), localhost-bound, reached over an SSH tunnel (set INFERENCE_BASE_URL to the tunnel). Phase B: Granite on RHOAI (vLLM, OpenAI-compatible /v1) — flip base_url + model here, no agent code changes. This mirrors ~/src/salience-engine/config/inference.json by design: same pattern, one core per repo, never inference embedded per-agent.",
+  "base_url": "http://127.0.0.1:11434/v1",
+  "model": "qwen2.5:14b"
+}
