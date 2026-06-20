@@ -123,6 +123,32 @@ They must **not** check consistency against the agent's own prior outputs.
 Inconsistency-with-reality is the find; inconsistency-with-yesterday is often the
 correct response to drift.
 
+### The Auditor's corpus includes PR-review outcomes
+
+The richest ground-anchored signal Genesis already produces is what *humans do to its
+PRs*. Reviewer comments, change-requests, lane-overrides (a human moving a PR the
+classifier put in `auto-merge` to `human-approval`, or the reverse), and post-merge
+reverts are first-class **Auditor** inputs — they are the world acting on the agent's
+output at the PR boundary, the human-checkpoint realization of the outcome grader. They
+join the audit / Argo / EDA trace corpus the Auditor mines (L4, async).
+
+Two disciplines bound this so it does not regress into the hazard above:
+
+- **Read PR feedback as contact, never as a narrative score.** A human rejecting or
+  fixing a harvested manifest is contact — *the output was wrong about the world*. The
+  agent's own drafted PR prose (commit message, PR body) is narrative and is **not**
+  graded for fluency, simplicity, or consistency; at most it is read *forensically*
+  after a contact failure (a revert), never as a standing quality metric.
+- **Overrides and reverts are labeled signal for the harness, not for the agent's
+  self-image.** A path-class humans repeatedly pull out of `auto-merge` is a proposed
+  change to the allowlist or the harvest heuristics — the hill-climbing loop closing —
+  surfaced for human ratification, never an auto-applied widening of the agent's own
+  authority (ADR-0012 constraint 5). Consistency is still measured against ground truth
+  and the ADRs (above), not against the agent's prior PRs.
+
+This names an input class; it is not a new mechanism. The Verifier (L2, hot path) is
+unaffected — PR-review mining is strictly the Auditor's async, forensic job.
+
 ## Consequences
 
 **Positive:**
@@ -155,8 +181,9 @@ correct response to drift.
 - **Post-MVP (live-cluster engineering, not fabricable from a design doc):**
   reversibility classifier over the action set; dry-run / canary harness for the
   irreversible class; deterministic outcome graders + ADR-conflict check; OOD pre-gate;
-  the async Auditor over audit + Argo + EDA trace history. Items fold into the
-  ADR-0016 sensor framework and the OKF drift pipeline.
+  the async Auditor over audit + Argo + EDA + PR-review (comments, change-requests,
+  lane-overrides, reverts) trace history. Items fold into the ADR-0016 sensor framework
+  and the OKF drift pipeline.
 
 ## Related
 
