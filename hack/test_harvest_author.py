@@ -340,8 +340,10 @@ class TestPartitionAndTriage(unittest.TestCase):
             ot = os.path.join(d, "operator-triage", "lane.json")
             self.assertTrue(os.path.exists(hs))
             self.assertTrue(os.path.exists(ot))
-            self.assertEqual(json.load(open(hs))["captured"], 1)
-            self.assertEqual(json.load(open(ot))["captured"], 1)
+            with open(hs) as f:
+                self.assertEqual(json.load(f)["captured"], 1)
+            with open(ot) as f:
+                self.assertEqual(json.load(f)["captured"], 1)
             with open(os.path.join(d, "operator-triage", "PR_BODY.md")) as f:
                 self.assertIn("triage, don't rubber-stamp", f.read())
 
