@@ -89,6 +89,7 @@ The first-light wizard (ADR-0012) adds one question to the organizational dimens
 survey:
 
 > **Multi-cluster connectivity model?**
+>
 > - Hub manages itself only (single-cluster, no spokes)
 > - Hub-push (hub initiates to spokes — spokes must be reachable)
 > - Pull-agent (spokes initiate to hub — hub needs no inbound connectivity to spokes)
