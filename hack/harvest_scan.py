@@ -187,6 +187,64 @@ def spec_manager_is_human(obj: dict) -> bool | None:
     return any(any(h in m for h in HUMAN_MANAGERS) for m in owners)
 
 
+# Operator/OLM/Helm-management signals (ADR-0011 confidence/ranking; ADR-0016
+# skill-pack heuristic). ADVISORY — used to PARTITION reviewer attention
+# (high-signal vs operator-triage), NEVER to exclude. A ':' in an RBAC name is the
+# strongest tell (operators namespace their roles `open-cluster-management:...`,
+# `system:...`); humans almost never use one.
+OPERATOR_NAME_PREFIXES = (
+    "system:", "open-cluster-management", "klusterlet", "hypershift",
+    "submariner", "multicluster",
+)
+# Substrings that mark controller/MCO output (e.g. 97-master-generated-kubelet,
+# rendered-master-<hash>). Humans don't name config "generated"/"rendered".
+OPERATOR_NAME_TOKENS = ("generated", "rendered")
+OPERATOR_LABEL_PREFIXES = (
+    "operator.open-cluster-management.io/", "cluster.open-cluster-management.io/",
+    "olm.", "operators.coreos.com/", "operatorframework.io/",
+)
+OPERATOR_MANAGED_BY = {"Helm", "olm", "operator"}
+# Annotations only a controller sets (service-ca injects CA-bundle content).
+OPERATOR_ANNOTATION_PREFIXES = ("service.beta.openshift.io/inject-cabundle",)
+
+
+def _generated_suffix(name: str) -> bool:
+    """A trailing random hash segment from `generateName` / a controller revision,
+    e.g. `eso-to-cr-script-89kkcdfgfc`. High precision: the last `-`-segment is
+    >=8 chars, lowercase alnum, and contains BOTH a digit and a letter — which
+    excludes real words like `disabled`/`configuration` and short tags like `v2`."""
+    if "-" not in name:
+        return False
+    seg = name.rsplit("-", 1)[-1]
+    return (len(seg) >= 8 and seg.isalnum() and seg.islower()
+            and any(c.isdigit() for c in seg) and any(c.isalpha() for c in seg))
+
+
+def operator_likely(obj: dict) -> bool:
+    """Advisory: does this captured object look operator/OLM/Helm-managed rather
+    than hand-authored? Partitions captures for review; it must NEVER drop them —
+    false positives just land in the triage PR and are recoverable by the reviewer,
+    so the heuristic leans toward precision (ambiguous objects stay in high-signal).
+    Operates on the NEATED object, so it relies on name/label/annotation signals;
+    operator-owned-field objects are already excluded at capture time (consider()),
+    so a field-manager check here would be dead. Signals: ':'-in-name, operator name
+    prefixes, `generated`/`rendered` tokens, a random hash suffix, OLM/ACM operator
+    labels, a managed-by chart/operator, or a controller-only annotation."""
+    meta = obj.get("metadata", {})
+    name = meta.get("name", "")
+    if ":" in name or name.startswith(OPERATOR_NAME_PREFIXES):
+        return True
+    if any(t in name for t in OPERATOR_NAME_TOKENS) or _generated_suffix(name):
+        return True
+    labels = meta.get("labels", {}) or {}
+    if any(k.startswith(OPERATOR_LABEL_PREFIXES) for k in labels):
+        return True
+    if labels.get("app.kubernetes.io/managed-by") in OPERATOR_MANAGED_BY:
+        return True
+    annos = meta.get("annotations", {}) or {}
+    return any(a.startswith(OPERATOR_ANNOTATION_PREFIXES) for a in annos)
+
+
 def parse_ts(s: str | None) -> datetime | None:
     """Parse an RFC3339 Kubernetes timestamp (e.g. 2024-12-01T10:11:12Z)."""
     if not s:
@@ -399,6 +457,33 @@ def consider(obj: dict, kind: str, res: ScanResult, namespaced: bool,
     res.captured.append((ref, neat(obj), temporal_signal(obj, epoch)))
 
 
+def list_candidate_namespaces() -> list[str]:
+    """User namespaces + allow-listed system namespaces. Skips the churny
+    openshift-*/kube-* namespaces at fetch time, so a per-namespace sweep stays
+    fast — a cluster-wide `--all-namespaces` configmap sweep TIMES OUT on busy
+    clusters (observed on the k8s-sno ACM hub) and silently drops the whole kind —
+    and avoids pulling operator noise we would only discard in consider()."""
+    data = oc_json(["namespaces"])
+    out = []
+    for n in (data or {}).get("items", []):
+        ns = n.get("metadata", {}).get("name", "")
+        if ns and (not is_system_ns(ns) or ns in SYSTEM_NS_ALLOW):
+            out.append(ns)
+    return out
+
+
+def fetch_curated_named(res: ScanResult, epoch: datetime | None) -> None:
+    """Fetch always-include named singletons BY NAME (e.g. kube-system/
+    cluster-config-v1). They live in denied namespaces, so the filtered
+    per-namespace sweep never returns them, and the cluster-wide sweep can time
+    out — fetching by name is fast and reliable. All current curated named objects
+    are ConfigMaps; extend here (carry the kind) if a non-ConfigMap is ever added."""
+    for (ns, name) in CURATED_NAMED_OBJECTS:
+        obj = oc_json(["configmap", name, "-n", ns])
+        if obj:
+            consider(obj, "configmaps", res, namespaced=True, epoch=epoch)
+
+
 def scan(emit: str | None, show_skips: bool, cluster: str | None = None) -> ScanResult:
     res = ScanResult()
 
@@ -417,13 +502,18 @@ def scan(emit: str | None, show_skips: bool, cluster: str | None = None) -> Scan
         for obj in data.get("items", []):
             consider(obj, kind, res, namespaced=False, epoch=epoch)
 
+    print(">> curated named singletons (fetched by name)")
+    fetch_curated_named(res, epoch)
+
     print(">> namespaced config (user + allow-listed system namespaces)")
+    namespaces = list_candidate_namespaces()
     for kind in CURATED_NAMESPACED_KINDS:
-        data = oc_json([kind, "--all-namespaces"])
-        if not data:
-            continue
-        for obj in data.get("items", []):
-            consider(obj, kind, res, namespaced=True, epoch=epoch)
+        for ns in namespaces:
+            data = oc_json([kind, "-n", ns])
+            if not data:
+                continue
+            for obj in data.get("items", []):
+                consider(obj, kind, res, namespaced=True, epoch=epoch)
 
     if emit:
         cname = cluster_name(cluster)
