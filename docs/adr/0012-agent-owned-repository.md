@@ -96,6 +96,11 @@ authoring threshold, it does not bypass review or auto-merge classification.
 
 ### Governance: conservative auto-merge
 
+> **Amended by ADR-0017:** the load-bearing axis of these lanes is
+> reversibility / blast-radius; the changed-path globs and kind checks below are
+> *proxies* for it. Security-sensitive content stays `human-approval` regardless.
+> This is a clarification of the lanes, not a widening of auto-merge.
+
 Every PR is classified into exactly one lane. Classification is by changed-path
 globs plus content checks; **anything unmatched falls to `human-approval`**.
 
