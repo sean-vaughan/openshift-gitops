@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    installer.open-cluster-management.io/release-version: "2.16.2"
+  labels:
+    installer.name: multiclusterhub
+    installer.namespace: open-cluster-management
+  name: console-metrics-monitor
+  namespace: open-cluster-management
+rules: [{"apiGroups": [""], "resources": ["pods", "services", "endpoints"], "verbs": ["get", "list", "watch"]}]

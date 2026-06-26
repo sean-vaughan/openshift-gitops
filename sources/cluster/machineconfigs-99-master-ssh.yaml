@@ -1,0 +1,17 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: "99-master-ssh"
+spec:
+  baseOSExtensionsContainerImage: ""
+  config:
+    ignition:
+      version: "3.2.0"
+    passwd:
+      users: [{"name": "core", "sshAuthorizedKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDMQskm6P6FftdHNqO8iZogsNuQR0ys5xCYCbbWKu6co"]}]
+  fips: false
+  kernelArguments: null
+  kernelType: ""
+  osImageURL: ""

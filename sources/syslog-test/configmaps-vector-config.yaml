@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  vector.toml: "data_dir = \"/var/lib/vector\"\n\n# TCP syslog listener (RFC3164/5424 autodetected)\n[sources.syslog_tcp]\ntype    = \"syslog\"\naddress = \"0.0.0.0:1514\"\nmode    = \"tcp\"\n\n# UDP syslog listener\n[sources.syslog_udp]\ntype    = \"syslog\"\naddress = \"0.0.0.0:1514\"\nmode    = \"udp\"\n\n# (Optional) TLS syslog listener on 6514 — mount a tls Secret below\n# [sources.syslog_tls]\n# type    = \"syslog\"\n# address = \"0.0.0.0:6514\"\n# mode    = \"tcp\"\n# tls.enabled  = true\n# tls.crt_file = \"/etc/tls/tls.crt\"\n# tls.key_file = \"/etc/tls/tls.key\"\n\n# Print every received message\n# [sinks.to_stdout]\n# type            = \"console\"\n# inputs          = [\"syslog_tcp\", \"syslog_udp\"] # add \"syslog_tls\" if you enable it\n# encoding.codec  = \"text\"\n# target          = \"stdout\"\n# encoding.only_fields = [\"timestamp\", \"hostname\", \"appname\", \"severity\", \"message\"]\n\n# transform: create a formatted line including hostname\n[transforms.to_text]\ntype   = \"remap\"\ninputs = [\"syslog_tcp\",'syslog_udp']\nsource = '''\n  # Check if 'host' exists; if not, fall back to the system hostname or \"unknown\"\n  .host, err = .host || get_hostname() || \"unknown\"\n  \n  # Overwrite the message field to include the host and the original message\n  .message, err = .host + \" \" + .message\n'''\n# sink: print the formatted message\n[sinks.to_stdout]\ntype   = \"console\"\ninputs = [\"to_text\"]\nencoding.codec = \"text\"\n"
+kind: ConfigMap
+metadata:
+  name: vector-config
+  namespace: syslog-test

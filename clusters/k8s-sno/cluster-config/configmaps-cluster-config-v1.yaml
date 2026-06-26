@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  install-config: "additionalTrustBundlePolicy: Proxyonly\napiVersion: v1\nbaseDomain: vaughan.cc\nbootstrapInPlace:\n  installationDisk: /dev/disk/by-id/wwn-0x6b8ca3a0eda93b002982d7eebdd98ef1\ncompute:\n- architecture: amd64\n  hyperthreading: Enabled\n  name: worker\n  platform: {}\n  replicas: 0\ncontrolPlane:\n  architecture: amd64\n  hyperthreading: Enabled\n  name: master\n  platform: {}\n  replicas: 1\nmetadata:\n  creationTimestamp: null\n  name: k8s-sno\nnetworking:\n  clusterNetwork:\n  - cidr: 10.128.0.0/14\n    hostPrefix: 23\n  machineNetwork:\n  - cidr: 192.168.86.0/24\n  networkType: OVNKubernetes\n  serviceNetwork:\n  - 172.30.0.0/16\nplatform:\n  none: {}\npublish: External\npullSecret: \"\"\nsshKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDMQskm6P6FftdHNqO8iZogsNuQR0ys5xCYCbbWKu6co\n"
+kind: ConfigMap
+metadata:
+  annotations:
+    kubernetes.io/description: "The install-config content used to create the cluster.  The cluster configuration may have evolved since installation, so check cluster configuration resources directly if you are interested in the current cluster state."
+  name: cluster-config-v1
+  namespace: kube-system

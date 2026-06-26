@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  server-version: "35cddf08d3e492ec2b328a832a60a463407dd556"
+  supported-versions: "{\"versions\":[\"4.21\",\"4.20\",\"4.19\",\"4.18\",\"4.17\",\"4.16\",\"4.15\",\"4.14\"]}"
+kind: ConfigMap
+metadata:
+  labels:
+    hypershift.openshift.io/supported-versions: "true"
+  name: supported-versions
+  namespace: hypershift

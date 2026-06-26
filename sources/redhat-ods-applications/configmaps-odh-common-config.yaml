@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  namespace: redhat-ods-applications
+kind: ConfigMap
+metadata:
+  name: odh-common-config
+  namespace: redhat-ods-applications
