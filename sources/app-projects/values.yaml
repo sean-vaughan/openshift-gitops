@@ -6,6 +6,9 @@
 # Teams with additional or different source repos override this field.
 sourceRepos:
   - https://github.com/sean-vaughan/openshift-gitops.git
+  # Personal-blog infra lives in its own repo under the dharmabruce identity and
+  # is pulled in via a per-app source override (clusters/k8s-sno/dharmabruce.yaml).
+  - https://github.com/dharmabruce/dharmabruce.com.git
 
 # Default deployment destinations.
 # Platform projects deploy to the local cluster, all namespaces.
