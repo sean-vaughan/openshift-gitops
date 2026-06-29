@@ -1,0 +1,19 @@
+# dharmabruce.com WordPress site — a relatively-anonymous personal blog under
+# the dharmabruce pseudonym, migrated from dharmabruce.blogspot.com.
+#
+# Unlike most apps, the manifests do NOT live in this repo: they are sourced
+# from the personal repo github.com/dharmabruce/dharmabruce.com via the
+# per-app source override below (exercises the ApplicationSet's spec.source
+# override; that repo is on the platform AppProject sourceRepos allow-list).
+#
+# Stateful app: prune disabled so a gate/source removal can never cascade into
+# deleting the namespace and its PVCs (WordPress docroot + database).
+spec:
+  source:
+    repoURL: https://github.com/dharmabruce/dharmabruce.com.git
+    path: .
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
