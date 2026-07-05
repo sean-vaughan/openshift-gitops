@@ -1,0 +1,4 @@
+resources:
+  - service-account.yaml
+  - rbac.yaml
+  - cronjob.yaml

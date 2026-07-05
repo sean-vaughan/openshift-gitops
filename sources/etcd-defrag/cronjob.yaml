@@ -1,0 +1,78 @@
+# Conditional etcd defragmentation for single-node OpenShift.
+#
+# The cluster-etcd-operator ships an automatic DefragController, but it disables
+# itself on SingleReplica (SNO) topology because defrag briefly blocks the sole
+# etcd member and there is no peer to hold quorum. On SNO the operator reports
+# `DefragControllerDisabled=True (AsExpected)` and leaves defrag to the admin.
+#
+# This CronJob fills that gap. It is *conditional*: it reads dbSize/dbSizeInUse
+# and only defrags when the DB is >100 MiB and >=45% fragmented — the same
+# thresholds the operator's DefragController uses. So it is a no-op on most runs
+# and only incurs the brief control-plane pause when there is real slack to
+# reclaim, which is what clears the etcdDatabaseHighFragmentationRatio alert.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-defrag
+  namespace: openshift-etcd
+  labels:
+    app: etcd-defrag
+spec:
+  # Weekly, Sunday 03:00 (cluster-local). The conditional check makes the
+  # cadence safe to increase — it only ever defrags when actually fragmented.
+  schedule: "0 3 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          serviceAccountName: etcd-defrag
+          restartPolicy: Never
+          containers:
+            - name: defrag
+              # In-cluster `oc` CLI (openshift/cli imagestream). Reuses the etcd
+              # pod's own etcdctl container, so no etcd client certs to mount.
+              image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+              securityContext:
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  NS=openshift-etcd
+                  POD=$(oc -n "$NS" get pods -l app=etcd \
+                        -o jsonpath='{.items[0].metadata.name}')
+                  echo "etcd pod: $POD"
+
+                  # Match the operator DefragController semantics.
+                  MIN_BYTES=104857600   # 100 MiB
+                  MAX_FRAG_PCT=45
+
+                  JSON=$(oc -n "$NS" exec "$POD" -c etcdctl -- \
+                         etcdctl endpoint status -w json)
+                  A=$(echo "$JSON" | grep -oE '"dbSize":[0-9]+'      | grep -oE '[0-9]+')
+                  U=$(echo "$JSON" | grep -oE '"dbSizeInUse":[0-9]+' | grep -oE '[0-9]+')
+                  FRAG=$(( (A - U) * 100 / A ))
+                  echo "dbSize=${A}B inUse=${U}B fragmented=${FRAG}%"
+
+                  if [ "$A" -lt "$MIN_BYTES" ] || [ "$FRAG" -lt "$MAX_FRAG_PCT" ]; then
+                    echo "Below threshold (need >100MiB and >=${MAX_FRAG_PCT}% frag); skipping."
+                    exit 0
+                  fi
+
+                  echo ">>> Defragmenting $POD (brief control-plane pause expected)..."
+                  oc -n "$NS" exec "$POD" -c etcdctl -- \
+                     etcdctl defrag --command-timeout=60s
+                  # Defrag can trip a NOSPACE alarm; clear it if raised.
+                  oc -n "$NS" exec "$POD" -c etcdctl -- etcdctl alarm disarm || true
+                  echo ">>> Post-defrag status:"
+                  oc -n "$NS" exec "$POD" -c etcdctl -- etcdctl endpoint status -w table

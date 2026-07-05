@@ -1,0 +1,29 @@
+# Least-privilege access for the defrag CronJob: it only needs to find the
+# etcd pod and exec `etcdctl` inside its etcdctl container. Scoped to a Role in
+# openshift-etcd — no cluster-wide grants.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: etcd-defrag
+  namespace: openshift-etcd
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: etcd-defrag
+  namespace: openshift-etcd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: etcd-defrag
+subjects:
+  - kind: ServiceAccount
+    name: etcd-defrag
+    namespace: openshift-etcd

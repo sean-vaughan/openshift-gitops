@@ -1,0 +1,5 @@
+# Conditional etcd defragmentation CronJob (sources/etcd-defrag).
+# SNO-only: the cluster-etcd-operator's DefragController disables itself on
+# SingleReplica topology, so this replaces it. Org defaults apply (platform
+# project, weekly Sun 03:00, defrags only when >100MiB and >=45% fragmented).
+{}
