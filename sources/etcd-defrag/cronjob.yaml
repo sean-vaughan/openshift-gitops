@@ -18,9 +18,11 @@ metadata:
   labels:
     app: etcd-defrag
 spec:
-  # Weekly, Sunday 03:00 (cluster-local). The conditional check makes the
-  # cadence safe to increase — it only ever defrags when actually fragmented.
-  schedule: "0 3 * * 0"
+  # Daily, 03:00 (cluster-local). etcd re-fragments past the alert threshold in
+  # ~2 days under normal OLM/CSV churn, so weekly left the alert firing for days
+  # between sweeps. The conditional check makes daily cheap: it is a no-op on
+  # runs where the DB is not actually fragmented.
+  schedule: "0 3 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -39,6 +41,12 @@ spec:
               image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
               securityContext:
                 runAsNonRoot: true
+                # openshift-etcd's SAs resolve to a RunAsAny SCC, so no UID is
+                # auto-injected from the namespace uid-range. Without an explicit
+                # non-root UID the kubelet rejects the root-default openshift/cli
+                # image ("runAsNonRoot and image will run as root"). Pin the first
+                # UID of the namespace range (openshift.io/sa.scc.uid-range).
+                runAsUser: 1000240000
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop: ["ALL"]
