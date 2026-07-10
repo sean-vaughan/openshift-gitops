@@ -96,6 +96,11 @@ authoring threshold, it does not bypass review or auto-merge classification.
 
 ### Governance: conservative auto-merge
 
+> **Amended by ADR-0017:** the load-bearing axis of these lanes is
+> reversibility / blast-radius; the changed-path globs and kind checks below are
+> *proxies* for it. Security-sensitive content stays `human-approval` regardless.
+> This is a clarification of the lanes, not a widening of auto-merge.
+
 Every PR is classified into exactly one lane. Classification is by changed-path
 globs plus content checks; **anything unmatched falls to `human-approval`**.
 
@@ -242,6 +247,12 @@ primitive supersedes a hand-rolled equivalent, Genesis adopts it:
   soon as the platform is present, by **SPIFFE/SPIRE** short-lived scoped workload
   identity. This directly retires the "agent is a high-value target; scope its
   credentials" risk below, and shrinks the irreducible cold-start footprint.
+  **Kagenti** (planned for Red Hat AI H2 2026) is the named product layer that
+  operationalizes SPIFFE/SPIRE for agent lifecycle management and policy binding in
+  the Red Hat ecosystem. Genesis plans to adopt Kagenti as its lifecycle integration
+  point when it reaches preview, rather than carrying bespoke SPIFFE wiring — the
+  protocol (SPIFFE) is a design invariant; Kagenti is the preferred product
+  realization of it.
 - **Least-privilege & isolation** — the PR-only git token and read-only ClusterRole
   (ADR-0011) are complemented by **sandboxed-container, per-session** execution of
   the `gitops-agent` image.
@@ -429,3 +440,14 @@ the irreducible minimum must come from the harvest, not from hand-configuration.
 - [AgentOps (Red Hat)](https://www.redhat.com/en/topics/ai/agentops)
 - [OpenClaw](https://openclaw.ai) — the BYOA reference agent in Red Hat's example
 - ADR-0013: Agent cost metering and budget governance (the cost dimension of AgentOps)
+- ADR-0015: Multi-cluster topology — hub-push vs. Argo CD Agent pull-based (the
+  multi-cluster deployment model for Genesis; Argo CD Agent went GA in OpenShift
+  GitOps 1.19, January 2026, making pull-based topology a production-grade
+  alternative for disconnected or firewall-constrained spoke clusters)
+- ADR-0016: Sensor-driven remediation PR authoring (Genesis's own remediation-PR
+  loop, extending the authoring loop defined here to multi-sensor remediation)
+- [Wiring Zero Trust Identity for AI Agents — Kagenti, SPIFFE, Token Exchange (Red Hat Emerging Tech, 2026-06-10)](https://next.redhat.com/2026/06/10/wiring-zero-trust-identity-for-ai-agents-spiffe-token-exchange-and-kagenti/)
+- [Argo CD Agent GA — OpenShift GitOps 1.19 (Red Hat Developer, 2026-01-12)](https://developers.redhat.com/blog/2026/01/12/whats-new-openshift-gitops-119)
+- ADR-0017: Loop engineering and the autonomous-decision review role (frames this
+  authoring loop as the four-loop stack; adds the Verifier/Auditor review role; refines
+  the governance classifier onto the reversibility/blast-radius axis)
