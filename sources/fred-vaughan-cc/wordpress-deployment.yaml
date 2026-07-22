@@ -50,6 +50,30 @@ spec:
                 secretKeyRef:
                   name: fred-db
                   key: MYSQL_PASSWORD
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fred-smtp
+                  key: password
+            # WP Mail SMTP is configured entirely via constants (shown as
+            # locked "defined in wp-config.php" values in wp-admin) so the
+            # mail path lives in git, not in the wp_options table. Outbound
+            # mail relays through Gmail as sean@vaughan.cc; Gmail rewrites
+            # the From header to the authenticated account regardless.
+            - name: WORDPRESS_CONFIG_EXTRA
+              value: |
+                define('WPMS_ON', true);
+                define('WPMS_MAILER', 'smtp');
+                define('WPMS_SMTP_HOST', 'smtp.gmail.com');
+                define('WPMS_SMTP_PORT', 587);
+                define('WPMS_SSL', 'tls');
+                define('WPMS_SMTP_AUTH', true);
+                define('WPMS_SMTP_USER', 'sean@vaughan.cc');
+                define('WPMS_SMTP_PASS', getenv('SMTP_PASSWORD'));
+                define('WPMS_MAIL_FROM', 'sean@vaughan.cc');
+                define('WPMS_MAIL_FROM_FORCE', true);
+                define('WPMS_MAIL_FROM_NAME', 'R. Fred Vaughan');
+                define('WPMS_MAIL_FROM_NAME_FORCE', true);
           resources:
             requests:
               cpu: 250m

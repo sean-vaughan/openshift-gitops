@@ -11,6 +11,7 @@ resources:
   - router-cert-role.yaml
   - router-cert-role-binding.yaml
   - sealed-db-secret.yaml
+  - sealed-smtp-secret.yaml
   - mariadb-pvc.yaml
   - mariadb-deployment.yaml
   - mariadb-service.yaml
