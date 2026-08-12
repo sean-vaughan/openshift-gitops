@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: heron-cookie
+  namespace: heron
+spec:
+  encryptedData:
+    cookie-secret: AgAX4tglj4FEiKD76Fy2OQISsXgtKG1VSA5kYOTawj+o6zZe6anlY02hMsSDxCqyBpiigXx0+FDOVTgEPdU/801VdJW9zR/F7oOMCfX4THaFEM8JYckot455HefOquiHJZxvf1P7fxvAyyhnZ/j1PQhT8e3v0tEfM6R+ymcx/adYI2pgaPg0vDFfhqScpsK9iALkMp6PwNQiAKRdmV6VfntqO/vp3xZe83Pd5XIW6ukau+gGXP0FLy8UmxmXV+GXIcIUIUMH5B8QPOyZ6HLxPmiRlO1AXGlBuwtWN3Db/PN7ktGaiuk9MFtxbKeVAJslI2d6u8Z6oXRYlpWGb5+LSfjpVpLKPKf6Nlc1eWvpDaUA4vwZujK+OHlyPfq5czW7I5TZydgD5xXuEwJllezuhSMylh2S9/F6tm6812xHg4lvtR3gudklj0GponYx8LLT218f56B+y3UU+xy/iuoMOHd18/Ev77z8SQP4AcC9qEEiOwsuPuRe61HtdW3M6+ekivvI48AZf09Lli5ZCI+nMgNRKFlyQBIiNO2uCgfuBdiT1n4MSn+RFYGNLYdiLa6rXi09onCUikgctEORrm9Bu7/IUE9Kn+LXFVPfaj0r6w+seznujGeiJQOVTfzA2ar0Uw0xzgtvpjMzuiNRBfD2lhvlgHkLwUhSTUSwhKbJHpKGbOrRxI2LojxKD88Uc5xl668ttrkq/8bRkG3JYnU051uF8izjJ+PXHtdZjnCAe5lm0EFSI7tU+MIsj714rQ==
+  template:
+    metadata:
+      name: heron-cookie
+      namespace: heron

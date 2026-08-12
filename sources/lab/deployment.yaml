@@ -1,0 +1,109 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab
+  namespace: heron
+  labels:
+    app: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab
+  template:
+    metadata:
+      labels:
+        app: lab
+    spec:
+      serviceAccountName: lab
+      enableServiceLinks: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: jupyter
+          image: quay.io/jupyter/scipy-notebook:latest
+          args:
+            # Auth is fully delegated to the oauth-proxy sidecar; Jupyter's own
+            # token auth is disabled and it only listens on localhost upstream.
+            - start-notebook.py
+            - --IdentityProvider.token=
+            - --ServerApp.port=8888
+          env:
+            # GPU services on the bazzite box (physical host, RTX 3090).
+            - name: OLLAMA_URL
+              value: http://192.168.4.45:11434
+            - name: WHISPER_URL
+              value: http://192.168.4.45:8001
+            - name: DEPTH_URL
+              value: http://192.168.4.45:8000
+          readinessProbe:
+            httpGet:
+              path: /api
+              port: 8888
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: work
+              mountPath: /home/jovyan
+        - name: oauth-proxy
+          image: quay.io/openshift/origin-oauth-proxy:4.14
+          args:
+            - --provider=openshift
+            - --openshift-service-account=lab
+            - --openshift-group=vaughan-family
+            - --upstream=http://localhost:8888
+            - --http-address=:4180
+            - --https-address=
+            - --email-domain=*
+            - --pass-user-headers=true
+            - --skip-provider-button=true
+            # Session lifetime is the cookie lifetime: the proxy validates the
+            # OpenShift access token only at login, never per-request, so the
+            # cookie may (and does) outlive the 24h token. Do NOT add
+            # --cookie-refresh here: the refresh path re-validates the stored
+            # token (openshift provider has no RefreshSessionIfNeeded), which
+            # would fail after 24h and force a full re-login every day.
+            # When the cookie expires mid-session, JupyterLab surfaces it as
+            # "File Save Error … Failed to fetch" (background fetches get a
+            # cross-origin 302 to the OAuth server); the fix is a page reload.
+            # 90 days keeps that rare.
+            - --cookie-expire=2160h0m0s
+            - --cookie-secret-file=/etc/proxy/secrets/cookie-secret
+            - --cookie-secure=true
+          ports:
+            - containerPort: 4180
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: cookie
+              mountPath: /etc/proxy/secrets
+              readOnly: true
+      volumes:
+        - name: work
+          persistentVolumeClaim:
+            claimName: lab-data
+        - name: cookie
+          secret:
+            secretName: heron-cookie

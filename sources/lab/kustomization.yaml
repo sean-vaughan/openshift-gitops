@@ -1,0 +1,16 @@
+# lab — JupyterLab (scipy-notebook) behind openshift oauth-proxy at
+# https://lab.vaughan.cc. Runs in the shared `heron` namespace, which is not
+# owned by this app (created via CreateNamespace=true until the rest of the
+# heron workloads are imported; namespace ownership should land there).
+#
+# The oauth-proxy cookie secret is cluster-specific (sealed) and lives in the
+# clusters/<cluster>/lab overlay, which is what the gate file points at.
+resources:
+  - service-account.yaml
+  - cluster-role-binding.yaml
+  - pvc.yaml
+  - certificate.yaml
+  - route-rbac.yaml
+  - route.yaml
+  - service.yaml
+  - deployment.yaml

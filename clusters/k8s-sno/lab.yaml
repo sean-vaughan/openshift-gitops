@@ -1,0 +1,12 @@
+# lab — JupyterLab behind oauth-proxy at lab.vaughan.cc (sources/lab).
+# Imported from hand-applied manifests 2026-08-12; overlay adds the sealed
+# oauth-proxy cookie secret.
+# Stateful app: prune disabled so a gate/source removal can never cascade into
+# deleting lab-data (family notebooks).
+spec:
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+  source:
+    path: clusters/k8s-sno/lab
