@@ -1,0 +1,11 @@
+# k8s-sno overlay for the lab app: base + cluster-specific sealed secrets.
+#
+# heron-cookie is the oauth-proxy cookie-signing secret. It is currently shared
+# with the (not-yet-imported) heron deployment in the same namespace; ownership
+# of the SealedSecret should move to the heron app when that import happens.
+# The sealed value here is a fresh secret generated at import time — the prior
+# hand-created value was never read. First sync rotates it, which invalidates
+# existing lab/heron browser sessions once (users transparently re-auth).
+resources:
+  - ../../../sources/lab
+  - heron-cookie-sealed.yaml

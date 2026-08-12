@@ -1,0 +1,18 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: lab
+  namespace: heron
+spec:
+  host: lab.vaughan.cc
+  port:
+    targetPort: proxy
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    externalCertificate:
+      name: lab-tls
+  to:
+    kind: Service
+    name: lab
