@@ -1,0 +1,16 @@
+apiVersion: v1
+binaryData:
+  config.pb.gz: "H4sIAAAAAAAC/+JiEeCSYFRi0GIABAAA//8NxTrGCgAAAA=="
+  policies.pb.gz: "H4sIAAAAAAAC/wEAAP//AAAAAAAAAAA="
+  runtime-policies.pb.gz: "H4sIAAAAAAAC/9SUz28bRRTHtalKlS2U1kWo8ulhRaR1Mu6u45+9uUkq0qaNZYzggATjmbf2KLsz25lZJ0Fw6ZELEkcuSL0gcuKEUE8cOHDkT0Jju6lNbGLoBY67877z3pv3eV//+8v+WoTVJm82yoSG1SqpUMpIL9qqEVqvUFpuIq3Wqrn3HmU91BItGmgxK5Q096BlLWUDsAraiud3WjFqa+BogBKmw9t7oJGhGKIBjU8zNNZp6JmaAlPSUiFRF3701lPFzd3x6ToIA1JJYiyVnGoONE21crpIaRDSoqbMCtmHI2EHr+4xpXF1h6jN+ChFnQhjXOXAVBZzwGNkmUVIaCyYUJn7zxGo5MBUkmqVCIOg0ahMMxxfI6SrNs6MRV38xeugsVowC537rW2gjKExriM7QJjt4+U1Lkhp7iqexLW1kEykMYKKYB+pse7XUMTYxxLsi0RYMBkbQGZoH0HJ+MRJOQ4xVmmC0m6CRTN6BKWBYy/r993HbfdwqVY8Gw3sDriXGgor0Ny7MTWg3SFKax56K59feuZdPOivvSudj5509x7vfuddCkvhc+/9/Jp/c0rXmfRaeMu/2j7Y+fCzVrfb2v7gJ8974b3tv9FtBUFQzl3uhrWg+cK7efZntRsG1WYpCCq/et7vnveH5/nfrPprDdoLorDZJJVmUCGVRtAgzUotJFvVIOQ05GGvXp9P6O4xMkfJmNBH/5DQl4AwlSSOCiGnQP1hAqoL+m9j+vMSmI67+F9DOjPr85Cu5QvzIb3qr44g3f1kd/vUG/oPd5Rct0AdK6AkcExjdeJaADugUhnyNEMt0M0VJE3QpJQhqBSlGYjIkkRJYZUWsl+8nb82qym8m3tnXuQFid2U0Q4wM+SwYZZLPKtZnPgLf39xYjWUh1kPiXTILUirhpIcnj1ssZh/c1pVyOduLYo99b7yHy9OjpZxwgSJJSmShDqYyad8Y1EdLry4mb81JStN6wrXc9dmo/+VI317xV+rV8oYbNVC0uOckwotc9KoVxskKtOoFjbrUS3kufV5lLaVtvBA6SPnEhNfaizjS6kTRhPhxKQKzycm5A4nZ+e96IiOdnGy9jRNY8HoqBzQmZSjlZzOu4Qn9alzmDMfmbrzr74kbPG3lYv9Z6aB17MhPE6VcZrpquxAq6w/mHnFcePxyeu5VMlNE/DYopY0BqtpFAm2OS4D5xZBYV9Rfp/GVDLUd58ojiMsDOqhcEhr2JN97R5pW0mrVRyjXuCGK8+8ZTk774kb+TvzPTHnXx95Yvug031w0Pm41dk59b78u10d/UuopH3UJHF4CDnXml6tbnEjf+OcbJFPzV3Vs6X8MwAA//+hKK96yQoAAA=="
+data:
+  cache-version: "125c0b1e-8f52-4bcc-80bb-13389c979c63"
+  central-endpoint: "central-rhacs-operator.apps.k8s-sno.vaughan.cc:443"
+  cluster-id: "95fa9e9c-8a02-4000-bdcd-784f427cb76f"
+  last-update-time: "2026-06-20T18:09:09.874440176Z"
+kind: ConfigMap
+metadata:
+  annotations:
+    stackrox.io/info: "ConfigMap for admission-control service. Automatically generated - do not modify. Your changes will be overwritten."
+  name: admission-control
+  namespace: stackrox

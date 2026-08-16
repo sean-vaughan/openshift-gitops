@@ -82,4 +82,14 @@ checks:
     - "unset-memory-requirements"
     - "restart-policy"
 
+    # dangling-networkpolicy is structurally inapplicable to this repo. A
+    # NetworkPolicy here guards a namespace whose workloads are operator- or
+    # Argo-deployed, not defined in sources/ — so kube-linter never sees a
+    # matching pod and always reports the policy as dangling. It also misfires
+    # on the valid empty-podSelector ({}) default-deny pattern, which selects
+    # all pods in the namespace by design (e.g. the harvested
+    # assisted-installer default-deny-ingress policy). This is a CI false
+    # positive on harvested NetworkPolicies, not a workload defect.
+    - "dangling-networkpolicy"
+
   customChecks: []

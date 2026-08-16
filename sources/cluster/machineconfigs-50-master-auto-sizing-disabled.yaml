@@ -1,0 +1,19 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  annotations:
+    openshift-patch-reference: machineConfig-to-set-the-default-behavior-of-NODE_SIZING_ENABLED
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: "50-master-auto-sizing-disabled"
+spec:
+  baseOSExtensionsContainerImage: ""
+  config:
+    ignition:
+      version: "3.5.0"
+    storage:
+      files: [{"contents": {"compression": "", "source": "data:text/plain;charset=utf-8;base64,Tk9ERV9TSVpJTkdfRU5BQkxFRD1mYWxzZQpTWVNURU1fUkVTRVJWRURfTUVNT1JZPTFHaQpTWVNURU1fUkVTRVJWRURfQ1BVPTUwMG0KU1lTVEVNX1JFU0VSVkVEX0VTPTFHaQo="}, "mode": 420, "path": "/etc/node-sizing-enabled.env"}]
+  fips: false
+  kernelArguments: null
+  kernelType: ""
+  osImageURL: ""

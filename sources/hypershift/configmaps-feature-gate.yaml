@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  TechPreviewEnabled: "false"
+kind: ConfigMap
+metadata:
+  name: feature-gate
+  namespace: hypershift

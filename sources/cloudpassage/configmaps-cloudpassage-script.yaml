@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  cloudpassage.sh: "#!/bin/bash\necho \"Running CloudPassage script...\"\n# Add your script logic here\nsleep infinity  # Keep the container running\n"
+kind: ConfigMap
+metadata:
+  name: cloudpassage-script
+  namespace: cloudpassage
