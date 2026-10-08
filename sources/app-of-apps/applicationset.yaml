@@ -21,7 +21,7 @@ spec:
           # pure defaults, or contain any Argo CD Application metadata/spec
           # overrides (see templatePatch below).
           - git:
-              repoURL: 'https://github.com/sean-vaughan/openshift-gitops.git'
+              repoURL: 'https://github.com/dharmabruce/openshift-gitops.git'
               revision: HEAD
               files:
                 - path: 'clusters/{{ .clusterName }}/*.yaml'
@@ -74,7 +74,7 @@ spec:
                (dig "spec" "source" "path" "" .) }}
         repoURL: >-
           {{ default
-               "https://github.com/sean-vaughan/openshift-gitops.git"
+               "https://github.com/dharmabruce/openshift-gitops.git"
                (dig "spec" "source" "repoURL" "" .) }}
         targetRevision: '{{ default "HEAD" (dig "spec" "source" "targetRevision" "" .) }}'
       syncPolicy:
